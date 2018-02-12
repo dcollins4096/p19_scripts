@@ -27,7 +27,7 @@ if 'leaf_indices' not in dir():
     if 1:
         #this top section needs to define
         #sim, scratchdir, data_template, leaf_indices.
-        sim = 'u05'
+        sim = 'u05_55'
         late_frame = 125
         scratchdir ='/scratch2/dcollins/Paper19_48/B02/u05-r4-l4-128'
         fname = '%s/DD%04d/data%04d'%(scratchdir,late_frame,late_frame)
@@ -35,12 +35,13 @@ if 'leaf_indices' not in dir():
         keepers = [0,1,8,10,11,12,67,68,64,61, 201, 125, 306]
         keepers = [34]
         keepers=[10]
+        keepers=[110]
         print("READ")
         leaf_indices = get_leaf_indices(late_ds,pickle_name = 'u05_0125_peaklist.pickle', 
-                                     subset = keepers)
+                                     subset = keepers, peak_radius=5.5)
         data_template = '%s/DD%04d/data%04d'
-        #loc_2 = nar([ 0.45874023,  0.48266602,  0.20336914] )
-        #peaks = fPickle.load('u05_0125_peaklist.pickle')
+        loc_2 = nar([ 0.45874023,  0.48266602,  0.20336914] )
+        peaks = fPickle.load('u05_0125_peaklist.pickle')
     if 0:
         #this top section needs to define
         #sim, scratchdir, data_template, leaf_indices.
@@ -53,12 +54,12 @@ if 'leaf_indices' not in dir():
 
 
 if 'framelist' not in dir():
-    framelist = [2]
+    framelist = [2, 125]
     individual_particle_tracks = False
     stop = False
     test_output = False
-    do_proj = False
-    analysis_loop=True
+    analysis_loop=False
+    do_proj = True
     do_field_stuff=True
     fields_from_grid = ['density', 'cell_volume','x','y','z', 'velocity_x', 'velocity_y','velocity_z','dx']
     other_args={}
@@ -66,7 +67,8 @@ if 'framelist' not in dir():
 
 import stuff_to_do
 reload(stuff_to_do)
-do_stuff = stuff_to_do.radial_velocity
+#do_stuff = stuff_to_do.radial_velocity
+do_stuff = stuff_to_do.sphere_proj
 
 if test_output:
     output=do_stuff(ds,sim,frame,ic, pos,vel,field_values, stop, other_args)
@@ -82,7 +84,7 @@ if analysis_loop:
 
         #projection
         if do_proj:
-            for axis in [0,1,2]:
+            for axis in [0]: #,1,2]:
                 proj = ds.proj('density',axis,center='c')
                 pw = proj.to_pw(center = 'c',width=(1.0,'code_length'), origin='domain')
                 pw.set_cmap('density','gray')
