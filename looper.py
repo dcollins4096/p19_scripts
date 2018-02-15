@@ -23,33 +23,6 @@ from importlib import reload
 from collections import defaultdict
 import weakref
 
-#this makes the loops for the clump_looper.
-#1.) write a function that does stuff as a method of the clump_looper
-#2.) when you define it, put @looper_loop above the definition.
-#3.) add it to the function
-#4.) looper_loop shouldn't be modified
-#See the 'full_plot' definition below,
-#Also See decorator_test.py for more details.
-def frame_loop(function):
-    def wrapper(self,*args,**kwargs):
-        for self.current_frame in self.frame_list:
-            ds = self.load()
-            function(self,*args,**kwargs)
-    return wrapper
-
-def particle_loop(function):
-    def wrapper(looper,*args,**kwargs):
-        for frame in looper.frame_list:
-            ds = looper.load()
-            #usually returns 'all_data'
-            region = looper.get_region()
-            for core_id in looper.core_list:
-                this_snapshot = looper.make_snapshot(frame,core_id)
-                if this_snapshot.R_centroid is None:
-                    this_snapshot.get_all_properties()
-                output = function(looper,this_snapshot,*args,**kwargs)
-        return output #this is what the function will return
-    return wrapper    #this return is from the decorator
             
 class core_looper():
     """We want to analyze the core pre-images for a bunch of frames.
@@ -305,3 +278,52 @@ class snapshot():
             NM= (self.field_values['cell_volume'] < 0).sum()
             print("ERROR: some particles (%d of them) not found.  This is problematic."%NM)
 
+#Decorators frame_loop and particle_loop takes functions and makes them loop over frame and core_id.
+#The decorator takes care of loading the data, so your funciton only needs to use it.
+#
+#1.) write a function that does stuff as a method of the clump_looper
+#2.) when you define it, put @looper_loop above the definition.
+#3.) add it to the function
+#4.) looper_loop shouldn't be modified
+#See the 'full_plot' definition below,
+#Also See decorator_test.py for more details.
+def frame_loop(function):
+    def wrapper(self,*args,**kwargs):
+        for self.current_frame in self.frame_list:
+            ds = self.load()
+            function(self,*args,**kwargs)
+    return wrapper
+
+def particle_loop(function):
+    def wrapper(looper,*args,**kwargs):
+        for frame in looper.frame_list:
+            ds = looper.load()
+            #usually returns 'all_data'
+            region = looper.get_region()
+            for core_id in looper.core_list:
+                this_snapshot = looper.make_snapshot(frame,core_id)
+                if this_snapshot.R_centroid is None:
+                    this_snapshot.get_all_properties()
+                output = function(looper,this_snapshot,*args,**kwargs)
+        return output #this is what the function will return
+    return wrapper    #this return is from the decorator
+# Decorators?
+# A decorator looks like
+# @some_decorator
+# def some_function(arguments):
+#    do_stuff()
+# The decorator then does stuff to the way some_function behaves.
+# So, if my decorator is do_five_times,
+# def do_five_times(function):
+#    def wrapper():
+#        for i in range(5):
+#            function()
+# then I do
+# @do_five_times
+# def say_no():
+#    print("no")
+#
+# say_no()
+# will get called five times.  
+# The decorator does
+# say_no = do_five_times(say_no)

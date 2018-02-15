@@ -2,7 +2,7 @@
 This just unpickles from the filename given"""
 
 
-import cPickle
+import _pickle as cPickle
 
 def load(filename, *args, **kwargs):
     inputfile = open(filename,'r')
@@ -22,7 +22,7 @@ def bload(filename, *args, **kwargs):
     return output
 
 def bdump(object,filename, *args, **kwargs):
-    print "bdump"
+    print( "bdump")
     file = open(filename,'wb')
     output = cPickle.dump(object,file,protocol=-1,*args,**kwargs)
     file.close()

@@ -13,7 +13,40 @@ from importlib import reload
 import looper
 reload(looper)
 
-directory = '/scratch1/dcollins/Paper19/SphereTest/s09_periodic_sphere'
+# Do this with python 3.
+# execfile is gone, do this instead:
+# 
+# >>> fname = 'thing.py'
+# >>> exec(open(fname).read(), globals(), locals())
+
+# The looper package has two main objects:
+# looper.core_looper keeps track of the data, frames, target indices, frames, cores to examine.
+# looper.snapshot hangs on to particle data for a given target core_id and frame.  
+# There are two decorators, looper.frame_loop and looper.paticle_loop.
+# The decorators take a function you write, and takes care of calling it for
+# every core_id and frame in your instance of looper.core_looper.
+# 
+# So, if I want to print the centroid of each core, I'd do
+
+#make an instance
+directory = '/scratch2/dcollins/Paper19_48/B02/u05-r4-l4-128'
+this_looper = looper.core_looper(directory= directory,
+                                 sim_name = 'u05',
+                                 out_prefix = 'test',
+                                 target_frame = 125,
+                                 frame_list = [10,100,110,120,125],
+                                 core_list = [110, 1],
+                                 fields_from_grid=['x','y','z']
+                              )
+this_looper.get_target_indices(h5_name='u05_0125_peaklist.h5')
+
+@looper.particle_loop   #the decorator takes care of the loop
+def print_centroid(looper,snapshot): #here's a function, needs to take at least these arguments)
+    print("Core %d frame %d centroid (%s)"%(
+          snapshot.core_id, snapshot.frame, str( snapshot.R_centroid)))
+looper.core_looper.print_centroid = print_centroid #add your function to looper.core_looper
+
+this_looper.print_centroid()
 
 #this decrator makes the following function get called
 #for all frames in core_looper.frame_list.
@@ -75,8 +108,6 @@ def core_test(looper,snapshot):
 looper.core_looper.core_test = core_test
 #a
 
-fname = 'run2.py'
-exec(open(fname).read(), globals(), locals())
 
 #this_looper.full_proj()
 #this_looper.core_test()
