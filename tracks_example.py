@@ -47,18 +47,27 @@ if 'this_looper' not in dir():
 # >>> particle_track = looper.tr.p(particle_id,field)
 # will produce tracks from a list of particles.
 
-plt.clf()
-for track in this_looper.tr['density']:
-    plt.plot(this_looper.tr.times, track, marker = '*')
-plt.xlabel('t')
-plt.ylabel(r'$\rho$')
-plt.yscale('log')
-plt.savefig('test2/many_tracks_many_cores.png')
-
-for core_id in this_looper.core_list:
+if 0:
     plt.clf()
-    for track in this_looper.tr.c(core_id,'density'):
+    for track in this_looper.tr['density']:
         plt.plot(this_looper.tr.times, track, marker = '*')
+    plt.xlabel('t')
+    plt.ylabel(r'$\rho$')
+    plt.yscale('log')
+    plt.savefig('test2/many_tracks_many_cores.png')
+
+for core_id in [65]: #this_looper.core_list:
+    plt.clf()
+    this_core_field = this_looper.tr.c(core_id,'density')
+    for track in this_core_field:
+        plt.plot(this_looper.tr.times, track, marker = '*')
+    #Then you can make the mean and standard deviations
+    mean = this_core_field.mean(axis=0)
+    std = this_core_field.std(axis=0)
+    plt.plot(this_looper.tr.times,mean, c='k',marker = '*')
+    plt.plot(this_looper.tr.times,mean+std, c='k',marker = '*')
+    plt.plot(this_looper.tr.times,mean-std, c='k',marker = '*')
+
     plt.xlabel('t')
     plt.ylabel(r'$\rho$')
     plt.title('Core %d'%core_id)
