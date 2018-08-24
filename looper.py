@@ -22,6 +22,7 @@ import pdb
 from importlib import reload
 from collections import defaultdict
 import weakref
+import trackage
 
             
 class core_looper():
@@ -67,12 +68,17 @@ class core_looper():
         self.target_frame  = target_frame
         self.out_prefix    = out_prefix
         self.fields_from_grid = ['density', 'cell_volume'] + fields_from_grid
+
+        #this is not used.
         self.individual_particle_tracks=individual_particle_tracks
+
+        #the track manager.
+        self.tr = None
 
         #defaults for things to be set later
         self.target_indices = {}
         self.ds = None
-        self.field_values={}
+        self.field_values=None
         self.snaps = defaultdict(dict) 
         #    defaultdict(whatev) is a dict, but makes a new (whatev) by default
         self.ds_list={}
@@ -130,6 +136,16 @@ class core_looper():
             this_snap = snapshot(self,frame,core_id)
             self.snaps[frame][core_id] = this_snap # not a weak ref, needs to persist.weakref.proxy(this_snap)
         return this_snap
+    def get_tracks(self):
+        if self.tr is None:
+            self.tr = trackage.track_manager(self)
+        for frame in self.frame_list:
+            for core_id in self.core_list:
+                this_snapshot = self.make_snapshot(frame,core_id)
+                if this_snapshot.R_centroid is None:
+                    this_snapshot.get_all_properties()
+                self.tr.ingest(this_snapshot)
+
 
 class snapshot():
     """For one core and one time, collect the particle positions and whatnot.
@@ -224,18 +240,26 @@ class snapshot():
         self.V_radial = (self.V_relative * self.N_vec).sum(axis=1)
 
 
-    def get_particle_values_from_grid(self):
+    def get_particle_values_from_grid(self, field_list=[]):
         """Get the simple nearest-sampled grid point from the particles in self.pos.
         Assumes that self.pos has been set correctly.
         """
         if self.pos is None:
             self.get_current_pos_vel()
 
-        self.field_values={}
-        for field in self.loop.fields_from_grid:
+        if self.field_values is None:
+            self.field_values={}
+        fields_to_get = np.unique(self.loop.fields_from_grid + field_list)
+        number_of_new_fields=0
+
+        for field in fields_to_get:
             #initialize field values to -1.
-            self.field_values[field] = np.zeros(self.target_indices.size)-1
-        #self.get_particle_values_from_grid() #,self.field_values, self.target_indices[self.core_id], self.pos)
+            if field not in self.field_values:
+                self.field_values[field] = np.zeros(self.target_indices.size)-1
+                number_of_new_fields += 1
+
+        if number_of_new_fields == 0:
+            return
 
         good_index_sort_np = np.array(copy.copy(self.target_indices)).astype('int64')
         for grid in self.ds.index.grids[-1::-1]:

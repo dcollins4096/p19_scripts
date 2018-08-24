@@ -1,6 +1,6 @@
 import yt
-import matplotlib.pyplot as plt
 from yt.visualization.plot_modifications import *
+import matplotlib.pyplot as plt
 import pyximport; pyximport.install()
 import particle_ops
 import particle_grid_mask
