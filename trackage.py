@@ -36,14 +36,41 @@ class track_manager():
     plots the field vs. time.
     self.ingest(snapshot) populates the master list
     """
-    def __init__(self,my_loop):
-        self.my_loop = weakref.proxy(my_loop)
+    def __init__(self,my_loop=None):
+        self.my_loop = None
+        if my_loop is not None:
+            self.my_loop = weakref.proxy(my_loop)
         self.particle_ids=nar([],dtype='int64')
         self.core_ids = nar([],dtype='int64')
         self.frames = nar([],dtype='int64')
         self.times = nar([],dtype='float64')
         self.track_dict={}
         self.shape=(0,0) #particles, frames
+    def write(self,fname):
+        fptr = h5py.File(fname,'w')
+        try:
+            fptr['particle_ids'] = self.particle_ids
+            fptr['core_ids'] = self.core_ids
+            fptr['frames'] = self.frames
+            fptr['times'] = self.times
+            for k in self.track_dict:
+                fptr[k] = self.track_dict[k]
+        except:
+            raise
+        finally:
+            fptr.close()
+    def read(self,fname):
+        fptr = h5py.File(fname,'r')
+        try:
+            for key in fptr:
+                if str(key) in ['particle_ids', 'core_ids', 'frames', 'times']:
+                    self.__dict__[key]=fptr[key][:]
+                else:
+                    self.track_dict[key] = fptr[key][:] 
+        except:
+            raise
+        finally:
+            fptr.close()
 
     def ingest(self,snapshot):
         particle_ids = copy.copy(snapshot.target_indices)
