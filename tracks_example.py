@@ -18,13 +18,14 @@ if 'this_looper' not in dir():
                                      sim_name = 'u05',
                                      out_prefix = 'test',
                                      target_frame = 125,
-                                     frame_list =  list(range(10,130,10)) + [125],
+                                     frame_list = [10,30],# list(range(10,130,10)) + [125],
                                      core_list =  [110, 1, 65], #, 167], 167 is broken...
                                      fields_from_grid=['x','y','z']
                                   )
     this_looper.get_target_indices(h5_name='u05_0125_peaklist.h5')
-    this_looper.get_tracks()
-
+    #this_looper.get_tracks()
+    #this_looper.tr.write('test_file.h5')
+this_looper.tr.read('test_file.h5')
 #
 # the track manager is new, and stored in 
 # looper.tr
