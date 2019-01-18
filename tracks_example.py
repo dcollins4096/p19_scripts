@@ -23,9 +23,9 @@ if 'this_looper' not in dir():
                                      fields_from_grid=['x','y','z']
                                   )
     this_looper.get_target_indices(h5_name='u05_0125_peaklist.h5')
-    #this_looper.get_tracks()
+    this_looper.get_tracks()
     #this_looper.tr.write('test_file.h5')
-this_looper.tr.read('test_file.h5')
+#this_looper.tr.read('test_file.h5')
 #
 # the track manager is new, and stored in 
 # looper.tr
