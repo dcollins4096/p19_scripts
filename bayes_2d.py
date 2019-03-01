@@ -9,6 +9,10 @@ from scipy.stats import skew
 from matplotlib.ticker import LogLocator, LogFormatterSciNotation as LogFormatter
 import trackage
 reload(trackage)
+def rs(arr):
+    return arr.reshape(arr.shape + (1,)) 
+def rs2(arr):
+    return arr.reshape(arr.shape + (1,) + (1,)) 
 if 'always' not in dir():
     always = False
 def expform(float_in, format = "%0.1e"):
@@ -42,23 +46,25 @@ if 'track' not in dir() or always:
     track = trackage.track_manager(None)
 
     directory = '/scratch2/dcollins/Paper19_48/B02/u05-r4-l4-128'
-    track.read('tracks_first_last_all_nonzero.h5')
+    #track.read('tracks_first_last_all_nonzero.h5')
+    track.read('tracks_frame012_all_nonzero.h5')
 
     #fname_initial = '/scratch2/dcollins/Paper19_48/B02/u05-r4-l4-128/DD0000/data0000'
     fname_initial = '/home/dcollins/scratch/u05-r4-l4-128/DD0000/data0000'
     fname_initial = '/home/dcollins/scratch/u05-r4-l4-128/DD0001/data0001'
+    fname_initial = '/scratch2/dcollins/Paper19_48/B02/u05-r4-l4-128/DD0001/data0001'
 
     ds_all = yt.load(fname_initial)
     ad_all = ds_all.all_data()
 
 if 'ad_pre' not in dir() or always:
-    mag = track['magnetic_field_strength'].reshape(track['magnetic_field_strength'].shape + (1,)) 
-    vel = track['velocity_magnitude'].reshape(track['velocity_magnitude'].shape + (1,)) 
+    mag = rs2(track['magnetic_field_strength'][:,1])
+    vel = rs2(track['velocity_magnitude'][:,1])
     #vel_bulk = track['_vel_mag'].reshape(track['_vel_mag'].shape + (1,))
     #vel_div = track['velocity_divergence'].reshape(track['velocity_divergence'].shape + (1,))
     #div_vel = track['divvel_plus'].reshape(track['divvel_plus'].shape + (1,))
-    den = track['density'].reshape(track['density'].shape + (1,))  
-    cell_v = track['cell_volume'].reshape(track['cell_volume'].shape + (1,))   
+    den = rs2(track['density'][:,1])
+    cell_v = rs2(track['cell_volume'][:,1])
      
     data = {'density':den, 
             'magnetic_field_strength':mag, 
@@ -84,7 +90,6 @@ def ratio_pair( field,  ad_pre=None, ad_cores=None,extrema={}, zlim=[1e-2,1e4]):
     norm = None
     z_pre = pdf_pre[field[2]]
     pre_plot = ax.pcolormesh(z_pre, norm=norm)  ##changed plt to ax   
-
 
     #pre_plot.set_norm(norm)
     #locator = LogLocator()
@@ -113,7 +118,7 @@ def ratio_pair( field,  ad_pre=None, ad_cores=None,extrema={}, zlim=[1e-2,1e4]):
     new_labels = tick_fixer( yticks, these_ybins)
     ax.set_yticklabels(new_labels,rotation='45')
 
-    outname = 'plot_test_%s_%s_%s.png'%tuple(field)
+    outname = '/home/dcollins4096/PigPen/plot_test_%s_%s_%s.png'%tuple(field)
     plt.savefig(outname)
     print(outname)
     return {'pdf_pre':pdf_pre,'ax':ax}
@@ -123,4 +128,3 @@ for field in ['density','velocity_magnitude']:
     this_extrema[field]=extrema[field]
 stuff=ratio_pair(['density','velocity_magnitude','cell_volume'], 
            ad_pre=ad_all, ad_cores=ad,extrema=this_extrema)
-print(new_ticklabels)
