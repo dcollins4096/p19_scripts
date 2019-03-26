@@ -11,7 +11,13 @@ import os
 import pdb
 import copy
 dbg = 0
-def get_leaf_indices(ds,c_min=None,c_max=None,step=100,h5_name=None,pickle_name=None, subset=None, peak_radius=1.5):
+from yt.data_objects.level_sets.clump_handling import \
+            Clump, \
+            find_clumps, \
+            get_lowest_clumps
+
+def get_leaf_indices(ds,c_min=None,c_max=None,step=100,h5_name="",pickle_name=None, 
+                     subset=None, peak_radius=1.5):
     """get all the leaf indices for peaks in *ds*.
     If *pickle_name* is supplied, load from that, or if it doesn't exist, save to that.
     *subset*, if supplied, will restrict the indices returned.
@@ -21,8 +27,8 @@ def get_leaf_indices(ds,c_min=None,c_max=None,step=100,h5_name=None,pickle_name=
         ad = ds.all_data()
         master_clump = Clump(ad,('gas','density'))
         master_clump.add_validator("min_cells", 8)
-        c_min = ad["gas", "density"].min()
-        c_max = ad["gas", "density"].max()
+        c_min = 1 #ad["gas", "density"].min()
+        c_max = 534069645. # ad["gas", "density"].max()
         step = 100
         find_clumps(master_clump, c_min, c_max, step)
     # Write a text file of only the leaf nodes.
