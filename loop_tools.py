@@ -49,7 +49,7 @@ def get_leaf_indices(ds,c_min=None,c_max=None,step=100,h5_name="",pickle_name=No
             this_peak = ds.arr([a,b,c],'code_length')
             peak_list.append(loc)
         #fPickle.dump(peak_list, pickle_name)
-        fptr=h5py.File(h5_name,'w')
+        fptr=h5py.File("NEW_PEAKS.h5",'w')
         fptr.create_dtaset('peaks',data=nar(peak_list))
         fptr.close()
     else:
