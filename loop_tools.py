@@ -25,6 +25,7 @@ def get_leaf_indices(ds,c_min=None,c_max=None,step=100,h5_name="",pickle_name=No
     if not os.path.exists(h5_name):
         print("WARNING: clump finding not tested.")
         ad = ds.all_data()
+        #ad  = ds.sphere([0.52075195, 0.74682617, 0.01196289], 0.1)
         master_clump = Clump(ad,('gas','density'))
         master_clump.add_validator("min_cells", 8)
         c_min = 1 #ad["gas", "density"].min()
@@ -32,11 +33,16 @@ def get_leaf_indices(ds,c_min=None,c_max=None,step=100,h5_name="",pickle_name=No
         step = 100
         find_clumps(master_clump, c_min, c_max, step)
     # Write a text file of only the leaf nodes.
-        write_clumps(master_clump,0, "%s_clumps.txt" % ds)
+        #write_clumps(master_clump,0, "%s_clumps.txt" % ds)
 
         leaf_clumps = get_lowest_clumps(master_clump)
     
 
+        peak_list=[]
+        den_max=[]
+        x_max=[]
+        y_max=[]
+        z_max=[]
         for i in range(len(leaf_clumps)):
             den_max.append(leaf_clumps[i][('gas','density')].max())
             x_max.append(leaf_clumps[i]['x'][np.where(leaf_clumps[i]['gas','density']==den_max[i])])
@@ -47,10 +53,10 @@ def get_leaf_indices(ds,c_min=None,c_max=None,step=100,h5_name="",pickle_name=No
             b= float(y_max[i])
             c= float(z_max[i])
             this_peak = ds.arr([a,b,c],'code_length')
-            peak_list.append(loc)
+            peak_list.append(this_peak)
         #fPickle.dump(peak_list, pickle_name)
         fptr=h5py.File("NEW_PEAKS.h5",'w')
-        fptr.create_dtaset('peaks',data=nar(peak_list))
+        fptr.create_dataset('peaks',data=np.array(peak_list))
         fptr.close()
     else:
         fptr = h5py.File(h5_name,'r')
