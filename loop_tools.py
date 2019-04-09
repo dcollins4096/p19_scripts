@@ -29,7 +29,8 @@ def get_leaf_indices(ds,c_min=None,c_max=None,step=100,h5_name="",pickle_name=No
         master_clump = Clump(ad,('gas','density'))
         master_clump.add_validator("min_cells", 8)
         c_min = 1 #ad["gas", "density"].min()
-        c_max = 534069645. # ad["gas", "density"].max()
+        #c_max = 534069645. # ad["gas", "density"].max()
+        c_max = ad["gas", "density"].max()
         step = 100
         find_clumps(master_clump, c_min, c_max, step)
     # Write a text file of only the leaf nodes.
