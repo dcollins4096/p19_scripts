@@ -23,7 +23,7 @@ import trackage
 reload(trackage)
 #many1: frame_list = list(range(10,130,10)) + [125]
 #many1: core_list =  [ 120, 10, 308, 41, 44, 110, 1, 65], 
-if 1:
+if 0:
 	if 'this_looper' not in dir():
 		directory = '/scratch2/dcollins/Paper19_48/B02/u05-r4-l4-128'
 		this_looper = looper.core_looper(directory= directory,
@@ -122,7 +122,6 @@ def load_loop(self,fname):
             self.target_indices[int(core)]=fptr['target_indices'][core].value
 
         for frame_name in fptr['snaps']:
-            print("read "+frame_name)
             frame_number = int(frame_name.split()[1])
             self.load(frame_number)
 
@@ -199,7 +198,12 @@ def check(lpr):
     c0=lpr.core_list[1]
     for frame in lpr.frame_list[1:]:
         for core in lpr.core_list:
+            if core not in lpr.snaps[frame]:
+                print("missing d%d c%d"%(frame,core))
+                continue
             for field in lpr.snaps[f0][c0].field_values:
+                if field is 'V_radial':
+                    continue
                 fv0 = lpr.snaps[f0][core].field_values[field]
                 #this_looper.snaps[0][77].field_values['density'].size
                 fv1 = lpr.snaps[frame][core].field_values[field]
