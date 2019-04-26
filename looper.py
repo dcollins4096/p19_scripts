@@ -110,7 +110,8 @@ class core_looper():
             self.ds_list[frame] = self.ds
         return self.ds
 
-    def get_target_indices(self,target_frame=None,core_list=None,h5_name=None, peak_radius=1.5):
+    def get_target_indices(self,target_frame=None,core_list=None,h5_name=None, peak_radius=1.5,
+                          bad_particle_list=None):
         if target_frame is None:
             target_frame = self.target_frame
         if core_list is None and self.core_list is not None:
@@ -118,7 +119,8 @@ class core_looper():
         target_ds = self.load(target_frame)
         print("Stuff: ds %s target frame %s cores %s"%(str(target_ds), str(target_frame), str(core_list)))
         new_indices = loop_tools.get_leaf_indices(target_ds,h5_name = h5_name, 
-                                     subset = core_list, peak_radius=peak_radius)
+                                     subset = core_list, peak_radius=peak_radius,
+                                                 bad_particle_list=bad_particle_list)
         for core_id in new_indices:
             self.target_indices[core_id] = new_indices[core_id]
         
@@ -136,6 +138,7 @@ class core_looper():
             this_snap = snapshot(self,frame,core_id)
             self.snaps[frame][core_id] = this_snap # not a weak ref, needs to persist.weakref.proxy(this_snap)
         return this_snap
+
     def get_tracks(self):
         if self.tr is None:
             self.tr = trackage.track_manager(self)
@@ -144,7 +147,24 @@ class core_looper():
                 this_snapshot = self.make_snapshot(frame,core_id)
                 if this_snapshot.R_centroid is None:
                     this_snapshot.get_all_properties()
+                this_snapshot.get_particle_values_from_grid()
                 self.tr.ingest(this_snapshot)
+"""
+        #this is not used.
+        self.individual_particle_tracks=individual_particle_tracks
+
+        #the track manager.
+        self.tr = None
+
+        #defaults for things to be set later
+        self.target_indices = {}
+        self.ds = None
+        self.field_values=None
+        self.snaps = defaultdict(dict) 
+        #    defaultdict(whatev) is a dict, but makes a new (whatev) by default
+        self.ds_list={}
+"""
+
 
 
 class snapshot():
@@ -161,7 +181,7 @@ class snapshot():
         self.mask=None
         self.pos=None
         self.R_centroid=None
-        self.field_values=None
+        self.field_values={}
         self.R_centroid  =None #(centroid weighted by grid quantities)
         self.R_vec       =None #(particle position relative to centroid)
         self.R_mag       =None #(magnitude of position)
@@ -186,13 +206,54 @@ class snapshot():
     def get_current_mask(self):
         """get the particle mask that relates particles for this core_id and this frame
         to the particles in the target_indices from the target_frame"""
-        these_pids=self.target_indices.astype('int64').v
+        these_pids=self.target_indices.astype('int64')
+        if type(these_pids) == yt.units.yt_array:
+            these_pids = these_pids.v
         data_region = self.get_region(self.frame)
         mask_to_get=np.zeros(these_pids.shape,dtype='int32')
         my_indices = data_region['particle_index'].astype('int64')
         found_any, mask = particle_ops.mask_particles(these_pids,my_indices,mask_to_get)
         self.mask = mask
         return found_any, mask
+        
+    def check_and_fix_bad_particles(self,mask):
+        if mask.sum() == self.target_indices.size:
+            return
+        else:
+            print("WARNING:  missing particle. Likely out of grid bounds.")
+        data_region = self.get_region(self.frame)
+        these_pids=self.target_indices.astype('int64')
+        my_indices = data_region['particle_index'].astype('int64')
+        bad_particles = []
+        for ppp in these_pids:
+            if ppp not in my_indices:
+                bad_particles.append(ppp)
+        if len(bad_particles) == 0:
+            print("WORSE WARNING: still can't find the missing particles.")
+            return
+        grids = []
+        found_particles=[]
+        for grid in self.ds.index.grids:
+            for ppp in bad_particles:
+                if ppp in grid['particle_index']:
+                    grids.append(grid)
+                    found_particles.append(ppp)
+                    ok = np.where( grid['particle_index'] == ppp)[0]
+                    self.pos = self.ds.arr( np.concatenate([self.pos,grid['particle_position'][ok]]),'code_length')
+                    self.vel = self.ds.arr( np.concatenate([self.vel,grid['particle_velocity'][ok]]),'code_velocity')
+                    self.ind = self.ds.arr( np.concatenate([self.ind,grid['particle_index'][ok]]),'dimensionless')
+
+        if len(found_particles) == 0:
+            print("EVEN WORSE WARNING: still can't find the missing particles.")
+            return
+        if len(found_particles) != len(bad_particles):
+            print("WARNING: found some but not all of the bad particles.")
+
+
+
+
+
+
 
     def get_current_pos_vel(self):
 
@@ -204,6 +265,7 @@ class snapshot():
         self.pos = region['particle_position'][mask == 1]
         self.vel = region['particle_velocity'][mask == 1]
         self.ind = region['particle_index'][mask == 1]
+        self.check_and_fix_bad_particles(mask)
 
 
     def compute_relative_coords(self):
@@ -221,7 +283,7 @@ class snapshot():
         self.vel
         self.ds
         """
-        if self.field_values is None:
+        if len(self.field_values.keys())==0:
             self.get_particle_values_from_grid()
 
         m = self.field_values['density'].sum()
@@ -238,6 +300,8 @@ class snapshot():
             self.N_vec[:,dim] = self.R_vec[:,dim]/self.R_mag
         self.V_relative = self.vel - self.V_bulk
         self.V_radial = (self.V_relative * self.N_vec).sum(axis=1)
+        #self.field_values['V_radial']=self.V_radial
+        #self.field_values['V_relative']=self.V_relative
 
 
     def get_particle_values_from_grid(self, field_list=[]):
