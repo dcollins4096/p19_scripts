@@ -71,6 +71,36 @@ class track_manager():
             raise
         finally:
             fptr.close()
+    def merge(self,fname):
+        fptr = h5py.File(fname,'r')
+        temp_dict = {}
+        temp_track_dict = {}
+        try:
+            for key in fptr:
+                if str(key) in ['particle_ids', 'core_ids', 'frames', 'times']:
+                    temp_dict[key]=fptr[key][:]
+                else:
+                    temp_track_dict[key] = fptr[key][:] 
+        except:
+            raise
+        finally:
+            fptr.close()
+        if len(temp_dict['particle_ids']) != len(self.particle_ids):
+            print("Error with merging: wrong number of particles")
+        elif np.abs(temp_dict['particle_ids'] - self.particle_ids).sum() > 0:
+            print("error with merging: wrong particles")
+        elif np.abs( temp_dict['core_ids']-self.core_ids).sum() > 0:
+            print("error with merging: core ids")
+        else:
+            frames = np.concatenate([self.frames,temp_dict['frames']])
+            args= np.argsort(frames)
+            self.frames=frames[args]
+            self.times=np.concatenate([self.times,temp_dict['times']])[args]
+            for key in self.track_dict:
+                oot = np.concatenate( [self.track_dict[key], temp_track_dict[key]],axis=1)[:,args]
+                self.track_dict[key]=oot
+
+        return {'td':temp_dict,'ttd':temp_track_dict}
 
     def ingest(self,snapshot):
         particle_ids = copy.copy(snapshot.target_indices)
