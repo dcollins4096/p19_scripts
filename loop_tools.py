@@ -17,7 +17,7 @@ from yt.data_objects.level_sets.clump_handling import \
             get_lowest_clumps
 
 def get_leaf_indices(ds,c_min=None,c_max=None,step=100,h5_name="",pickle_name=None, 
-                     subset=None, peak_radius=1.5):
+                     subset=None, peak_radius=1.5,bad_particle_list=None):
     """get all the leaf indices for peaks in *ds*.
     If *pickle_name* is supplied, load from that, or if it doesn't exist, save to that.
     *subset*, if supplied, will restrict the indices returned.
@@ -67,6 +67,12 @@ def get_leaf_indices(ds,c_min=None,c_max=None,step=100,h5_name="",pickle_name=No
     if subset is None:
         subset = range(len(peak_list))
 
+    bad_particles=None
+    if bad_particle_list:
+        if os.path.exists(bad_particle_list):
+            bad_ptr = h5py.File(bad_particle_list,'r')
+            bad_particles = bad_ptr['bad_particles'].value
+            bad_ptr.close()
     leaf_indices={}
 
     min_dx = ds.index.get_smallest_dx()
@@ -79,12 +85,20 @@ def get_leaf_indices(ds,c_min=None,c_max=None,step=100,h5_name="",pickle_name=No
                            left_edge  = this_clump-peak_radius*min_dx, 
                            right_edge = this_clump+peak_radius*min_dx)
         indices = region['particle_index'].astype('int64')
+        if bad_particles is not None:
+            mask = np.ones_like(indices,dtype='bool')
+            for ni,i in enumerate(indices):
+                #there's certainly a better way to do this than a loop.
+                if i in bad_particles:
+                    mask[ni]=False
+            indices=indices[mask]
+                    
         leaf_indices[clump]=indices
     return leaf_indices
     #for nc,indices in enumerate(leaf_indices):
      #   pw_full.annotate_select_particles(1.0, col='r', indices=indices)
    # pw_full.save(fname)
-def shift_particles(ds, position,shiftRight = False):
+def shift_particles(ds, position,shift = np.zeros(3),shiftRight = False):
     """Shifts a periodically separated clump by the domain width.
     Looks for gaps in the positions larger than max('dx'), shifts one group
     to the right (left if shiftRight=Flase) to be spatially contiguous."""
@@ -92,7 +106,6 @@ def shift_particles(ds, position,shiftRight = False):
     DomainLeft = ds.domain_left_edge
     DomainRight =  ds.domain_right_edge
     DomainWidth = DomainRight - DomainLeft
-    shift = np.zeros(3)
     shifted=copy.copy(position)
     for i,axis in enumerate(['x','y','z']):
 
@@ -174,7 +187,7 @@ yt.add_field(      ("deposit","deposit_target_particles"),
                        yt.ValidateParameter('indices_late'), 
                        yt.ValidateParameter('mask_to_get'), 
                        yt.ValidateGridType()],
-         display_name = "target_particles")
+         display_name = "target_particles",sampling_type='cell')
 
 class SelectParticleCallback(PlotCallback):
     _type_name = "select_particles"
