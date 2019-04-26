@@ -23,6 +23,9 @@ if 'pdf_0000' not in dir():
     cell_v0= rs2(track['cell_volume'][:,0] )
     cell_v1 = rs2(track['cell_volume'][:,1] )
     data = {'d1':den1,'density':den0, 'my_vol':cell_v0}#, 'kinetic_energy':ke} 
+    data['KE'] =  rs2(track['kinetic_energy'][:,0])
+    data['ME'] =  rs2(track['magnetic_energy'][:,0])
+
     bbox = np.array([[0.,1.]]*3) 
     ds_2 = yt.load_uniform_grid(data, den0.shape, length_unit="cm", bbox=bbox)
     ad_2 = ds_2.all_data() 
@@ -33,6 +36,28 @@ if 'pdf_0000' not in dir():
     pdf_2 = yt.create_profile(ad_2,'density','my_vol',
                                  weight_field=None,fractional=False,
                                  extrema=extrema, n_bins=n_bins)
+if 1:
+
+
+    #extrema['ME']=
+    import matplotlib.colors as colors
+    pdf_2 = yt.create_profile(ad_2,['density','ME'],'my_vol',
+                                 weight_field=None,fractional=False) #extrema=extrema, n_bins=n_bins
+    plt.clf()
+    norm = colors.LogNorm(vmin=1e-7,vmax=1e3)
+    #norm = colors.Normalize( vmin=-7, vmax=3)#(vmin=1e-7,vmax=1e3)
+    field=pdf_2['my_vol']
+    myplot=plt.imshow(field, interpolation='nearest',origin='lower',norm=norm)
+    #cb=plt.colorbar(myplot)
+    #cb.cmap.set_under('w')
+    plt.savefig('derp.png')
+
+
+    #pdf_0 = yt.create_profile(ad0,['density','magnetic_energy'],'my_vol',
+    #                             weight_field=None,fractional=False)
+    #                             #extrema=extrema, n_bins=n_bins)
+#
+
 if 0:
     plt.clf()
     plt.plot(pdf_0000.x,pdf_0000['cell_volume'],label= r'$p(\rho)$')
@@ -58,7 +83,7 @@ if 0:
     plt.ylabel(r'$PDF(*|\rho)$')
     plt.xscale('log');plt.yscale('log')
     plt.savefig('bayes_1b.png')
-if 1:
+if 0:
     fig, ax1 = plt.subplots()
     ax2 = ax1.twinx()
     ax1.plot(pdf_0000.x,pdf_0000['cell_volume'],label= r'$p(\rho)$', color='k')
