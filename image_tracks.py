@@ -17,6 +17,60 @@ reload(trackage)
 import tracks_read_write as trw
 reload(trw)
 from davetools import *
+plt.close('all')
+class mini_scrubber():
+    def __init__(self,trk,core_id):
+        self.trk=trk
+        self.scrub(core_id)
+        self.axis=0
+                
+    def scrub(self,core_id, axis=0):
+        self.raw_x = self.trk.c([core_id],'x')
+        self.raw_y = self.trk.c([core_id],'y')
+        self.raw_z = self.trk.c([core_id],'z')
+        #this_x=raw_x
+        #this_y=raw_y
+        if 1:
+            #do the shift
+            self.this_x = shift_down(self.raw_x)
+            self.this_y = shift_down(self.raw_y)
+            self.this_z = shift_down(self.raw_z)
+        else:
+            #don't actuall shift
+            self.this_x = self.raw_x+0
+            self.this_y = self.raw_y+0
+            self.this_z = self.raw_z+0
+        self.mean_x = np.mean(self.this_x,axis=0)
+        self.mean_y = np.mean(self.this_y,axis=0)
+        self.mean_z = np.mean(self.this_z,axis=0)
+        self.nparticles,self.ntimes=self.this_x.shape
+        self.meanx2 = np.tile(self.mean_x,(self.raw_x.shape[0],1))
+        self.meany2 = np.tile(self.mean_y,(self.raw_x.shape[0],1))
+        self.meanz2 = np.tile(self.mean_z,(self.raw_z.shape[0],1))
+        self.r2 = (self.this_x-self.meanx2)**2+\
+                  (self.this_y-self.meany2)**2+\
+                  (self.this_z-self.meanz2)**2
+        self.r=np.sqrt(self.r2)
+        self.rmax = np.max(self.r,axis=0)
+        self.max_track = np.where( self.r[:,0] == self.rmax[0])
+        self.rmax_fat=np.tile(self.rmax,(self.raw_x.shape[0],1))
+        self.rms = np.sqrt( np.mean(self.r2,axis=0))
+        self.axis = axis
+        if self.axis == 0:
+            self.this_h = self.this_y
+            self.h_label='y'
+            self.this_v = self.this_z
+            self.v_label='z'
+        elif self.axis == 1:
+            self.this_h = self.this_z
+            self.h_label='z'
+            self.this_v = self.this_x
+            self.v_label='x'
+        if self.axis == 2:
+            self.this_h = self.this_x
+            self.h_label='x'
+            self.this_v = self.this_y
+            self.v_label='y'
 if 0:
     #newer read.
     if 'this_looper' not in dir():
@@ -49,24 +103,41 @@ def shift_down(pos):
     global smo
     sign = -1
     out = copy.copy(pos)
-    delta = sign*(out[:,1:]-out[:,:-1])
-    shape = delta.shape
-    bork=delta.max(axis=1)
-    bork = np.tile(bork,(shape[1],1)).transpose()
-    bo = np.logical_and(delta <= bork, delta > 0.5)
+    bork=out[:,-1]+0
+    #delta = sign*(out[:,1:]-out[:,:-1])
+    #shape = delta.shape
+    #bork=delta.max(axis=1)
+    #bork = np.tile(bork,(shape[1],1)).transpose()
+    bo = out+0#np.logical_and(delta <= bork, delta > 0.5)
 
-    out[:,:-1][bo] -= 1
+    #out[:,:-1][bo] -= 1
    
 
-    distance_from_final = np.abs(out- np.tile(out[:,-1], (out.shape[1],1)).transpose())
-    ft = np.abs(distance_from_final[:,:-1]) > 0.5
-    out[:,:-1][ft] += 1*np.sign(distance_from_final[:,:-1][ft])
+    #distance_from_final = np.abs(out- np.tile(out[:,-1], (out.shape[1],1)).transpose())
+    mean_pos = np.median(out[:,-1])
+    print("mean_pos",mean_pos)
+    distance_from_final =        out- mean_pos
+    #ft = np.abs(distance_from_final[:,:-1]) > 0.5
+    ft = np.abs(distance_from_final) > 0.5
+    smo=ft
+    out[ft] -=  1*np.sign(distance_from_final[ft])
 
 
 
     #out[ out > point ] = out[ out > point]-1
     return out#,delta
-
+#moo = this_x[336:337,:]
+#moo=this_x
+#print(moo)
+#cloo=shift_down(moo)
+##plt.clf()
+#plt.plot(moo[:,0],'k:')
+#plt.plot(moo[:,1],'k-')
+#plt.plot(moo[:,2],'k')
+#plt.plot(cloo[:,-1],'g')
+#plt.plot(cloo[:,0])
+#plt.plot(cloo[:,1])
+plt.savefig('image_tracks/dbg2.png')
 if 0:
     #first read 
     if 'this_looper' not in dir():
@@ -93,16 +164,20 @@ if 0:
 #ls = [202]
 #ls=[41]
 #ls = [10]
-file_list=glob.glob('/home/dcollins/scratch/Paper19/track_three/*h5')
+#file_list=glob.glob('/home/dcollins/scratch/Paper19/track_three/*h5')
+#file_list=glob.glob('/home/dcollins/scratch/Paper19/track_sixteen_good/*h5')
+file_list=glob.glob('/home/dcollins/scratch/Paper19/track_sixteen_full/*h5')
 directory = '/home/dcollins/scratch/u05-r4-l4-128'
-for fname in file_list[:3]:
+core_31_baddies=nar([3192, 3207, 3283, 3327, 3390, 3444, 3458])
+for nfile,fname in enumerate(file_list) :#[:3])
     #0164.h5
     t1 = fname.split("/")[-1]
-    l = len("track_three_to_test_core_")
+    #l = len("track_three_to_test_core_")
+    l = len("track_sixteen_frames_core_")
     this_cor = int(t1[l:l+4]) #[fname.index('_'):]
-    print(this_cor)
-    if this_cor not in [25]:
+    if this_cor not in  [31]:
         continue
+    print(this_cor)
     this_looper=looper.core_looper(directory=directory)
     trw.load_loop(this_looper,fname)
     thtr = this_looper.tr
@@ -111,8 +186,90 @@ for fname in file_list[:3]:
     rm = rainbow_map(len(all_cores))
     plt.clf()
     plt.plot([0,1,1,0,0],[0,0,1,1,0])
+
     if 1:
-        #just make images.
+        #time plots
+        asort =  np.argsort(thtr.times)
+        xxx = 1./128/np.logspace(0,4,5,base=2)
+        fig_rt2,ax_rt2=plt.subplots(1,1)
+        for nc,core_id in enumerate(ls):
+            ms = mini_scrubber(thtr,core_id)
+            density = thtr.c([core_id],'density')
+            tmap=rainbow_map(ms.ntimes)
+            for npart in core_31_baddies: #range(ms.nparticles)[::100]:
+                plt.plot( thtr.times[asort], density[npart,asort],c='k',linestyle=':',marker='*')
+            outname = 'image_tracks/rho_t_2_c%04d.png'%core_id
+            plt.yscale('log')
+            plt.savefig(outname)
+            print('saved '+outname)
+
+    if 0:
+        #radial plots.
+        asort =  np.argsort(thtr.times)
+        xxx = 1./128/np.logspace(0,4,5,base=2)
+        for nc,core_id in enumerate(ls):
+            ms = mini_scrubber(thtr,core_id)
+            density = thtr.c([core_id],'density')
+            tmap=rainbow_map(ms.ntimes)
+            if 1:
+                #density plots
+                tmap=rainbow_map(ms.ntimes)
+                plt.clf()
+                for xxxx in xxx:
+                    plt.plot([xxxx,xxxx],[0.01,4e6],c=[0.5]*4)
+                for it,nt in enumerate(asort):
+                    plt.scatter(ms.r[:,nt], density[:,nt],c=[tmap(it)]*ms.r.shape[0],
+                               label = "%0.4f"%thtr.times[nt])
+                powerline(plt,1e-3,1e-1,5e4,-2)
+                plt.xscale('symlog',linthreshx=xxx.min()/0.5);
+                #plt.xlim(1e-5,0.5)
+                plt.xlim(0,0.5)
+                plt.yscale('log')
+                plt.ylim(0.01,4e6)
+                plt.legend(loc=1)
+                outname = 'image_tracks/rho_t_c%04d.png'%core_id
+                plt.savefig(outname)
+                print('saved '+outname)
+
+    
+    if 0:
+        delta=0.1
+        #time snaps
+        fig_many, ax_many = plt.subplots(1,1)
+        asort =  np.argsort(thtr.times)
+        for nc,core_id in enumerate(ls):
+            tmap=rainbow_map(ms.ntimes)
+            for it,nt in enumerate(asort):
+                ax_many.clear()
+                ax_many.plot([0,1,1,0,0],[0,0,1,1,0])
+                ax_many.scatter(ms.this_x[:,nt],ms.this_y[:,nt],s=0.1)
+                ax_many.set_xlim(-delta,1+delta); ax_many.set_ylim(-delta,1+delta)
+                title='t=%0.5f'%thtr.times[nt]
+                ax_many.set_title(title)
+                ax_many.set_aspect('equal')
+                outname = 'image_tracks/xy_t_c%04d_n%04d.png'%(core_id,it)
+                fig_many.savefig(outname)
+            #nt=100
+        print(outname)
+            #outname = 'image_tracks/xy_t_c%04d_n%04d.png'%(core_id,nt)
+            #fig_many.savefig(outname)
+
+    if 0:
+        fig_rt, ax_rt = plt.subplots(1,1)
+        ax0=ax_rt
+        asort =  np.argsort(thtr.times)
+        for nc,core_id in enumerate(ls):
+            ms=mini_scrubber(thtr,core_id)
+            tmap=rainbow_map(ms.ntimes)
+            for num_part in range(5):#ms.nparticles):
+                ax_rt.plot(thtr.times[asort],ms.r[num_part,asort])
+            ax_rt.set_title('core %d'%core_id)
+            outname = 'image_tracks/r_vs_time_c%04d.png'%core_id
+            fig_rt.savefig(outname)
+            print('saved '+outname)
+
+    if 0:
+        #Make images with circles.
         fig_rhist,ax_rhist=plt.subplots(1,1)
         fig,ax=plt.subplots(1,1,figsize=(8,8))
         fig_rmst,ax_rmst=plt.subplots(1,1,figsize=(8,8))
@@ -121,58 +278,43 @@ for fname in file_list[:3]:
             ax.clear()
             print('plot core %d'%core_id)
             n_for_color = int(np.where( all_cores == core_id)[0])
-            raw_x = thtr.c([core_id],'y')
-            raw_y = thtr.c([core_id],'z')
-            if 1:
-                #do the shift
-                this_x = shift_down(raw_x)
-                this_y = shift_down(raw_y)
-            else:
-                #don't actuall shift
-                this_x = raw_x+0
-                this_y = raw_y+0
-            mean_x = np.mean(this_x,axis=0)
-            mean_y = np.mean(this_y,axis=0)
-            nparticles,ntimes=this_x.shape
-            meanx2 = np.tile(mean_x,(raw_x.shape[0],1))
-            meany2 = np.tile(mean_y,(raw_x.shape[0],1))
-            r2 = (this_x-meanx2)**2 + (this_y-meany2)**2
-            r=np.sqrt(r2)
-            rmax = np.max(r,axis=0)
-            max_track = np.where( r[:,0] == rmax[0])
-            rmax_fat=np.tile(rmax,(raw_x.shape[0],1))
-            rms = np.sqrt( np.mean(r2,axis=0))
-            ax_rmst.plot(thtr.times, rms,c=rm(n_for_color))
-            ok = np.where( r==rmax_fat)
-            circle_max = plt.Circle( (mean_x[0],mean_y[0]), rmax[0], color=rm(n_for_color),fill=False)
+            ms = mini_scrubber(thtr,core_id)
+            ax_rmst.plot(thtr.times, ms.rms,c=rm(n_for_color))
+            ok = np.where( ms.r==ms.rmax_fat)
+            circle_max = plt.Circle( (ms.mean_x[0],ms.mean_y[0]), ms.rmax[0], 
+                                    color=rm(n_for_color),fill=False)
             ax.add_artist(circle_max)
-            circle_rms = plt.Circle( (mean_x[0],mean_y[0]), rms[0], color=rm(n_for_color),fill=False)
+            circle_rms = plt.Circle( (ms.mean_x[0],ms.mean_y[0]), ms.rms[0], 
+                                    color=rm(n_for_color),fill=False)
             ax.add_artist(circle_rms)
-            #theseparts = np.arange(0,nparticles,100,dtype='int')
-            #theseparts = [413]
-            theseparts = np.arange(0,nparticles,dtype='int')
+            theseparts = np.arange(0,ms.nparticles,dtype='int')
+            theseparts=core_31_baddies[0:1]
             rr=rainbow_map(len(theseparts))
             ax.plot([0,1,1,0,0],[0,0,1,1,0])
             for npp,npart in enumerate(theseparts):
                 lab=None
+                this_color = rm(n_for_color)
                 if npart==0:
                     lab = 'c %d'%core_id
                     #print('wtf',lab)
                     this_color = rm(n_for_color)
                 if 0:
                     this_color = rr(npp)
-                ax.plot( this_x[npart,:], this_y[npart,:],c=this_color,label=lab)
+                ax.plot( ms.this_x[npart,:], ms.this_y[npart,:])#,c=this_color,label=lab)
             delta = 0.5
             ax.set_xlim(-delta,1+delta); ax.set_ylim(-delta,1+delta)
-            fig.savefig('image_tracks/image_c%04d.png'%core_id)
+            outname = 'image_tracks/image_c%04d.png'%core_id
+            fig.savefig(outname)
+            print("save "+outname)
 
-            ntimes = len(raw_x[0,:]) 
-            tmap=rainbow_map(ntimes)
+            tmap=rainbow_map(ms.ntimes)
             ax_rhist.clear()
-            for nt in range(ntimes):
-                ax_rhist.hist(r[:,nt],histtype='step',color=tmap(nt))
+            for nt in range(ms.ntimes):
+                ax_rhist.hist(ms.r[:,nt],histtype='step',color=tmap(nt))
             ax_rhist.set_title('core %d'%core_id)
-            fig_rhist.savefig('image_tracks/rhist_c%04d.png'%core_id)
+            outname = 'image_tracks/rhist_c%04d.png'%core_id
+            fig_rhist.savefig(outname)
+            print('saved '+outname)
 
             #lab = 'c %d'%core_id
             ##ax.plot(mean_x , mean_y,c=rm(nc),label=lab)
@@ -181,54 +323,13 @@ for fname in file_list[:3]:
         ax.set_xlim(-1,2); ax.set_ylim(-1,2)
         #ax.set_xlim(-delta,1+delta); ax.set_ylim(-delta,1+delta)
         ax.legend(loc=0)
-        fig.savefig('image_tracks/core_rel.png')
-        fig_rmst.savefig('image_tracks/rrms.png')
+        outname = 'image_tracks/core_rel.pdf'
+        fig.savefig(outname)
+        print('saved '+outname)
+        outname = 'image_tracks/rrms.png'
+        fig_rmst.savefig(outname)
+        print('saved '+outname)
         plt.close('all')
-
-    if 1:
-        #radial plots.
-        #fig_rhist,ax_rhist=plt.subplots(1,1)
-        fig,ax=plt.subplots(1,1,figsize=(8,8))
-        #fig_rmst,ax_rmst=plt.subplots(1,1,figsize=(8,8))
-        ax.plot([0,1,1,0,0],[0,0,1,1,0])
-        for nc,core_id in enumerate(ls):
-            n_for_color = int(np.where( all_cores == core_id)[0])
-            raw_x = thtr.c([core_id],'y')
-            raw_y = thtr.c([core_id],'z')
-            density = thtr.c([core_id],'density')
-            this_x = shift_down(raw_x)
-            this_y = shift_down(raw_y)
-            mean_x = np.mean(this_x,axis=0)
-            mean_y = np.mean(this_y,axis=0)
-            nparticles,ntimes=this_x.shape
-            meanx2 = np.tile(mean_x,(raw_x.shape[0],1))
-            meany2 = np.tile(mean_y,(raw_x.shape[0],1))
-            r2 = (this_x-meanx2)**2 + (this_y-meany2)**2
-            r=np.sqrt(r2)
-            ntimes = len(raw_x[0,:]) 
-            tmap=rainbow_map(ntimes)
-            if 0:
-                #density plots
-                ntimes = len(raw_x[0,:]) 
-                tmap=rainbow_map(ntimes)
-                plt.clf()
-                for nt in range(ntimes):
-                    plt.scatter(r[:,nt], density[:,nt],c=[tmap(nt)]*r.shape[0])
-                plt.xscale('log');plt.yscale('log')
-                plt.xlim(1e-5,0.5)
-                plt.ylim(0.01,4e6)
-                plt.savefig('image_tracks/rho_t_c%04d.png'%core_id)
-            if 0:
-                #density plots
-                ntimes = len(raw_x[0,:]) 
-                tmap=rainbow_map(ntimes)
-                plt.clf()
-                for nt in range(ntimes):
-                    plt.scatter(r[:,nt], density[:,nt],c=[tmap(nt)]*r.shape[0])
-                plt.xscale('log');plt.yscale('log')
-                plt.xlim(1e-5,0.5)
-                plt.ylim(0.01,4e6)
-                plt.savefig('image_tracks/rho_t_c%04d.png'%core_id)
 
 
 
