@@ -167,14 +167,17 @@ if 0:
 #file_list=glob.glob('/home/dcollins/scratch/Paper19/track_three/*h5')
 #file_list=glob.glob('/home/dcollins/scratch/Paper19/track_sixteen_good/*h5')
 file_list=glob.glob('/home/dcollins/scratch/Paper19/track_sixteen_full/*h5')
+file_list=glob.glob('/home/dcollins/scratch/Paper19/particle_error/particle_error_test_c0031_threeframes.h5')
+file_list=glob.glob('/home/dcollins/scratch/Paper19/particle_error/track_indfix_sixteenframe_core_0031.h5')
 directory = '/home/dcollins/scratch/u05-r4-l4-128'
 core_31_baddies=nar([3192, 3207, 3283, 3327, 3390, 3444, 3458])
 for nfile,fname in enumerate(file_list) :#[:3])
     #0164.h5
     t1 = fname.split("/")[-1]
     #l = len("track_three_to_test_core_")
-    l = len("track_sixteen_frames_core_")
-    this_cor = int(t1[l:l+4]) #[fname.index('_'):]
+    #l = len("track_sixteen_frames_core_")
+    #this_cor = int(t1[l:l+4]) #[fname.index('_'):]
+    this_cor=31
     if this_cor not in  [31]:
         continue
     print(this_cor)
@@ -196,12 +199,14 @@ for nfile,fname in enumerate(file_list) :#[:3])
             ms = mini_scrubber(thtr,core_id)
             density = thtr.c([core_id],'density')
             tmap=rainbow_map(ms.ntimes)
-            for npart in core_31_baddies: #range(ms.nparticles)[::100]:
-                plt.plot( thtr.times[asort], density[npart,asort],c='k',linestyle=':',marker='*')
-            outname = 'image_tracks/rho_t_2_c%04d.png'%core_id
-            plt.yscale('log')
-            plt.savefig(outname)
-            print('saved '+outname)
+            for sub in range(20):
+                plt.clf()
+                for npart in range(sub*300,(sub+1)*300): #range(sub,ms.nparticles,20):
+                    plt.plot( thtr.times[asort], density[npart,asort],c='k',linestyle=':',marker='*')
+                outname = 'image_tracks/rho_t_sub2_%03d_c%04d.png'%(sub,core_id)
+                plt.yscale('log')
+                plt.savefig(outname)
+                print('saved '+outname)
 
     if 0:
         #radial plots.
