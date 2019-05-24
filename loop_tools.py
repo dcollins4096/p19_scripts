@@ -249,10 +249,10 @@ class SelectParticleCallback(PlotCallback):
 
         for ndim,dim in enumerate([xax,yax]):
             if data.ds.periodicity[dim] and True:
-                print("SHIFT", ndim, dim)
+                #print("SHIFT", ndim, dim)
                 #If the plot is to the right of the domain
                 delta = upper_lim[ndim] - data.ds.domain_right_edge[dim]
-                print("DELTA up", dim, delta, upper_lim[ndim])
+                #print("DELTA up", dim, delta, upper_lim[ndim])
                 if delta > dx_min:
                     delta = delta + data.ds.domain_left_edge[dim]
                     particles_to_shift = np.where(shifted_field[ndim] < delta)
@@ -269,19 +269,18 @@ class SelectParticleCallback(PlotCallback):
 
         gg = ( ( shifted_field_x >= x0 ) & ( shifted_field_x <= x1 )
            &   ( shifted_field_y >= y0 ) & ( shifted_field_y <= y1 ) )
-        print("CHECK", x0, x1, y0, y1, "npart", reg['particle_index'].size,"n(gg)", gg.sum())
-        print("CHECK", shifted_field_x.min(), shifted_field_x.max(), shifted_field_y.min(),shifted_field_y.max())
+        #print("CHECK", x0, x1, y0, y1, "npart", reg['particle_index'].size,"n(gg)", gg.sum())
+        #print("CHECK", shifted_field_x.min(), shifted_field_x.max(), shifted_field_y.min(),shifted_field_y.max())
         #import pdb
         #pdb.set_trace()
 
-        if self.indices != None:
-            print( "particle callback warning: this might get expensive")
+        if self.indices is not None:
             mask_to_get = na.zeros(self.indices.shape, dtype='int32')
             found_any, mask = particle_ops.mask_particles(
                 self.indices.astype('int64'), reg['particle_index'].astype('int64'), mask_to_get)
             gg = ( gg & (mask == 1) )
 
-        print( "nparticles do it.", mask_to_get.sum())
+        print( "nparticles in particle callback.", mask_to_get.sum())
         if False:
             if self.ptype is not None:
                 gg &= (reg["particle_type"] == self.ptype)
