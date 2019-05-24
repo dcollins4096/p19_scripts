@@ -1,7 +1,6 @@
 
-from go import *
+from GL import *
 # for new ds.all_data() profile plot - 
-import core_dump
 def rs(arr):
     return arr.reshape(arr.shape + (1,)) 
 def rs2(arr):
@@ -23,6 +22,68 @@ if 'track' not in dir():
     track.read('tracks_frame012_all_nonzero.h5')
 all_cores = np.unique(track.core_ids)
 if 1:
+    plt.clf()
+    dmeans = np.zeros_like(all_cores,dtype='float')
+    dstds = np.zeros_like(all_cores,dtype='float')
+    logdmeans = np.zeros_like(all_cores,dtype='float')
+    logdstds = np.zeros_like(all_cores,dtype='float')
+    vmeans = np.zeros_like(all_cores,dtype='float')
+    vstds = np.zeros_like(all_cores,dtype='float')
+    npart = np.zeros_like(all_cores,dtype='float')
+    for i,nc in enumerate(all_cores):
+        this_density = track.c(int(nc),'density')[:,0]
+        npart[i] = this_density.size
+        this_vel = track.c(int(nc),'velocity_magnitude')[:,0]
+        dmeans[i]=this_density.mean()
+        dstds[i] = this_density.std()
+        logdmeans[i]= np.log(this_density).mean()
+        logdstds[i] =  np.log(this_density).std()
+        vmeans[i]= this_vel.mean()
+        vstds[i] = this_vel.std()
+
+        #plt.hist(np.log10(this_density),histtype='step',color='k')
+        #plt.hist(this_density,histtype='step',color='k')
+    ok=npart>1
+    if 0:
+        plt.clf()
+        plt.scatter(logdstds[ok],vstds[ok])
+        #plt.yscale('log')
+        #plt.xscale('log')
+        #plt.ylabel(r'$\log_{10} ||v||$')
+        plt.ylabel(r'$v_{rms}$')
+        plt.xlabel(r'$\rho_{rms}$')
+        odir='/home/dcollins/RESEARCH2/Paper56_FisherBayesPreimage/2019-03-01-pdfs'
+        plt.savefig(odir+'/pre_logrho_rms_v_rms.png')
+    if 1:
+        plt.scatter(dstds[ok],vstds[ok])
+        plt.yscale('log')
+        plt.xscale('log')
+        #plt.ylabel(r'$\log_{10} ||v||$')
+        plt.ylabel(r'$v_{rms}$')
+        plt.xlabel(r'$\rho_{rms}$')
+        odir='/home/dcollins/RESEARCH2/Paper56_FisherBayesPreimage/2019-03-01-pdfs'
+        plt.savefig(odir+'/pre_rho_rms_v_rms.png')
+    if 1:
+        plt.clf()
+        plt.scatter(dmeans[ok],vstds[ok])
+        plt.yscale('log')
+        plt.xscale('log')
+        #plt.ylabel(r'$\log_{10} ||v||$')
+        plt.ylabel(r'$v_{rms}$')
+        plt.xlabel(r'$\rho$')
+        odir='/home/dcollins/RESEARCH2/Paper56_FisherBayesPreimage/2019-03-01-pdfs'
+        plt.savefig(odir+'/pre_rho_mean_v_rms.png')
+    if 0:
+        plt.clf()
+        plt.scatter(dmeans,vmeans)
+        plt.yscale('log')
+        plt.xscale('log')
+        #plt.ylabel(r'$\log_{10} ||v||$')
+        plt.ylabel(r'$||v||$')
+        plt.xlabel(r'$\rho$')
+        odir='/home/dcollins/RESEARCH2/Paper56_FisherBayesPreimage/2019-03-01-pdfs'
+        plt.savefig(odir+'/pre_rho_v_mean.png')
+if 0:
     plt.clf()
     for i,nc in enumerate(all_cores):
         this_density = track.c(int(nc),'velocity_magnitude')[:,0]
