@@ -103,6 +103,7 @@ class track_manager():
         return {'td':temp_dict,'ttd':temp_track_dict}
 
     def ingest(self,snapshot):
+        #pdb.set_trace()
         particle_ids = copy.copy(snapshot.target_indices)
         if snapshot.core_id not in self.core_ids:
             #this might not be the best place for the parent step.
@@ -114,7 +115,7 @@ class track_manager():
 
         if snapshot.frame not in self.frames:
             self.frames=np.append(self.frames,snapshot.frame)
-            self.times=np.append(self.times,snapshot.ds['InitialTime'])
+            self.times=np.append(self.times,snapshot.time) #ds['InitialTime'])
 
         frame_id = np.where(self.frames == snapshot.frame)[0][0]
 
@@ -180,4 +181,89 @@ class track_manager():
                     self[field].ingest(this_snapshot)
 
 
+def shift_down(pos):
+    #shift based on the time history: if a particle jumps more than half the box,
+    #move it.
+    global bork
+    global delta
+    global bo
+    global smo
+    sign = -1
+    out = copy.copy(pos)
+    bork=out[:,-1]+0
+    #delta = sign*(out[:,1:]-out[:,:-1])
+    #shape = delta.shape
+    #bork=delta.max(axis=1)
+    #bork = np.tile(bork,(shape[1],1)).transpose()
+    bo = out+0#np.logical_and(delta <= bork, delta > 0.5)
+
+    #out[:,:-1][bo] -= 1
+   
+
+    #distance_from_final = np.abs(out- np.tile(out[:,-1], (out.shape[1],1)).transpose())
+    mean_pos = np.median(out[:,-1])
+    print("mean_pos",mean_pos)
+    distance_from_final =        out- mean_pos
+    #ft = np.abs(distance_from_final[:,:-1]) > 0.5
+    ft = np.abs(distance_from_final) > 0.5
+    smo=ft
+    out[ft] -=  1*np.sign(distance_from_final[ft])
+
+
+
+    #out[ out > point ] = out[ out > point]-1
+    return out#,delta
         
+class mini_scrubber():
+    def __init__(self,trk,core_id):
+        self.trk=trk
+        self.scrub(core_id)
+        self.axis=0
+                
+    def scrub(self,core_id, axis=0):
+        self.raw_x = self.trk.c([core_id],'x')
+        self.raw_y = self.trk.c([core_id],'y')
+        self.raw_z = self.trk.c([core_id],'z')
+        #this_x=raw_x
+        #this_y=raw_y
+        if 1:
+            #do the shift
+            self.this_x = shift_down(self.raw_x)
+            self.this_y = shift_down(self.raw_y)
+            self.this_z = shift_down(self.raw_z)
+        else:
+            #don't actuall shift
+            self.this_x = self.raw_x+0
+            self.this_y = self.raw_y+0
+            self.this_z = self.raw_z+0
+        self.mean_x = np.mean(self.this_x,axis=0)
+        self.mean_y = np.mean(self.this_y,axis=0)
+        self.mean_z = np.mean(self.this_z,axis=0)
+        self.nparticles,self.ntimes=self.this_x.shape
+        self.meanx2 = np.tile(self.mean_x,(self.raw_x.shape[0],1))
+        self.meany2 = np.tile(self.mean_y,(self.raw_x.shape[0],1))
+        self.meanz2 = np.tile(self.mean_z,(self.raw_z.shape[0],1))
+        self.r2 = (self.this_x-self.meanx2)**2+\
+                  (self.this_y-self.meany2)**2+\
+                  (self.this_z-self.meanz2)**2
+        self.r=np.sqrt(self.r2)
+        self.rmax = np.max(self.r,axis=0)
+        self.max_track = np.where( self.r[:,0] == self.rmax[0])
+        self.rmax_fat=np.tile(self.rmax,(self.raw_x.shape[0],1))
+        self.rms = np.sqrt( np.mean(self.r2,axis=0))
+        self.axis = axis
+        if self.axis == 0:
+            self.this_h = self.this_y
+            self.h_label='y'
+            self.this_v = self.this_z
+            self.v_label='z'
+        elif self.axis == 1:
+            self.this_h = self.this_z
+            self.h_label='z'
+            self.this_v = self.this_x
+            self.v_label='x'
+        if self.axis == 2:
+            self.this_h = self.this_x
+            self.h_label='x'
+            self.this_v = self.this_y
+            self.v_label='y'
