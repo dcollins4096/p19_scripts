@@ -98,8 +98,12 @@ class core_looper():
             self.current_frame = self.frame_list[0]
         return self.current_frame
 
-    def load(self,frame=None):
+    def load(self,frame=None,dummy=False):
         """runs yt.load, and saves the ds so we don't have multiples for many cores."""
+        if dummy:
+            self.ds = None
+            self.ds_list[frame]=None
+            return None
         if frame is None:
             frame = self.get_current_frame()
         self.filename = self.data_template%(self.directory,frame,frame)
@@ -131,11 +135,11 @@ class core_looper():
         region = self.ds.all_data()
         return region
 
-    def make_snapshot(self,frame,core_id):
+    def make_snapshot(self,frame,core_id,dummy_ds=False):
         if core_id in self.snaps[frame]:
             this_snap = self.snaps[frame][core_id]
         else:
-            this_snap = snapshot(self,frame,core_id)
+            this_snap = snapshot(self,frame,core_id,dummy_ds=dummy_ds)
             self.snaps[frame][core_id] = this_snap # not a weak ref, needs to persist.weakref.proxy(this_snap)
         return this_snap
 
@@ -170,10 +174,13 @@ class core_looper():
 class snapshot():
     """For one core and one time, collect the particle positions and whatnot.
     """
-    def __init__(self,loop,frame,core_id):
+    def __init__(self,loop,frame,core_id,dummy_ds=False):
         self.loop           = weakref.proxy(loop) #cyclic references are bad, weakref helps.
         self.target_indices = weakref.proxy(loop.target_indices[core_id])
-        self.ds             = weakref.proxy(loop.load(frame) )
+        if dummy_ds:
+            self.ds=None
+        else:
+            self.ds             = weakref.proxy(loop.load(frame,dummy=dummy_ds) )
         self.core_id        = core_id
         self.frame          = frame
 
@@ -189,6 +196,8 @@ class snapshot():
         self.V_bulk      =None #(mean motion)
         self.V_rel       =None #(relative motion)
         self.V_radial    =None #(radial coordinate of velocity)
+        
+        self.dummy_ds = dummy_ds
 
     def get_all_properties(self):
         """Run all the relevant analysis pieces."""
