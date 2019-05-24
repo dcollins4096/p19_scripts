@@ -103,7 +103,7 @@ class track_manager():
         return {'td':temp_dict,'ttd':temp_track_dict}
 
     def ingest(self,snapshot):
-        particle_ids = copy.copy(snapshot.target_indices)
+        particle_ids = copy.copy(snapshot.ind)
         if snapshot.core_id not in self.core_ids:
             #this might not be the best place for the parent step.
             core_ids = np.ones_like(particle_ids) * snapshot.core_id
