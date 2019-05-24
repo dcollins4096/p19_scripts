@@ -21,9 +21,9 @@ from davetools import *
 plt.close('all')
 file_list=glob.glob('/home/dcollins/scratch/Paper19/particle_error/particle_error_test_c0031_threeframes.h5')
 file_list=glob.glob('/home/dcollins/scratch/Paper19/particle_error/track_indfix_sixteenframe_core_0031.h5')
-file_list=glob.glob('/home/dcollins/scratch/Paper19/track_index_fix/track_indfix_sixteenframe_core_*.h5')
+file_list=glob.glob('/scratch1/dcollins/Paper19/Datasets/track_indfix_sixteenframe_core_*.h5')
 directory = '/home/dcollins/scratch/u05-r4-l4-128'
-class frrfll():
+class parameter_package():
     def __init__(self,rho0=1,rho1=1,tc=1,tff_local=1,rho_c=1, tff_global=1):
         self.rho0   =rho0
         self.rho1   =rho1
@@ -47,9 +47,9 @@ class frrfll():
         output += "tc/tffg  =%0.2e\n"%(tc/tff_global)
         output += "rho_c    =%0.2e\n"%rho_c
         return output
-freefall = defaultdict(frrfll)
+freefall = defaultdict(parameter_package)
 
-for nfile,fname in enumerate(file_list) :#[:3])
+for nfile,fname in enumerate(file_list[:3]) :#[:3])
     #0164.h5
     t1 = fname.split("/")[-1]
     #l = len("track_three_to_test_core_")
