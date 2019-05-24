@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pdb
 nar = np.array
-
 from importlib import reload
 
 import looper
@@ -18,6 +17,8 @@ import tracks_read_write as trw
 reload(trw)
 from davetools import *
 plt.close('all')
+directory = '/scratch2/dcollins/Paper19_48/B02/u05-r4-l4-128'
+#directory = '/home/dcollins/scratch/u05-r4-l4-128'
 class mini_scrubber():
     def __init__(self,trk,core_id):
         self.trk=trk
@@ -74,7 +75,6 @@ class mini_scrubber():
 if 0:
     #newer read.
     if 'this_looper' not in dir():
-        directory = '/home/dcollins/scratch/u05-r4-l4-128'
         this_looper=looper.core_looper(directory=directory)
         #file_list=glob.glob('/home/dcollins/scratch/Paper19/track_sixteen/*h5')
         file_list=glob.glob('/home/dcollins/scratch/Paper19/track_three/*h5')
@@ -137,12 +137,10 @@ def shift_down(pos):
 #plt.plot(cloo[:,-1],'g')
 #plt.plot(cloo[:,0])
 #plt.plot(cloo[:,1])
-plt.savefig('image_tracks/dbg2.png')
+#plt.savefig('image_tracks/dbg2.png')
 if 0:
     #first read 
     if 'this_looper' not in dir():
-        #directory = '/scratch2/dcollins/Paper19_48/B02/u05-r4-l4-128'
-        directory = '/home/dcollins/scratch/u05-r4-l4-128'
         this_looper = looper.core_looper(directory= directory,
                                          sim_name = 'u05',
                                          out_prefix = 'test',
@@ -166,17 +164,20 @@ if 0:
 #ls = [10]
 #file_list=glob.glob('/home/dcollins/scratch/Paper19/track_three/*h5')
 #file_list=glob.glob('/home/dcollins/scratch/Paper19/track_sixteen_good/*h5')
-file_list=glob.glob('/home/dcollins/scratch/Paper19/track_sixteen_full/*h5')
-directory = '/home/dcollins/scratch/u05-r4-l4-128'
+file_list=glob.glob('track_indfix_sixteenframe*')
+#file_list = ['./particle_error_hunt_core31.h5']
 core_31_baddies=nar([3192, 3207, 3283, 3327, 3390, 3444, 3458])
+core_31_baddies_2=nar([3212])
 for nfile,fname in enumerate(file_list) :#[:3])
     #0164.h5
     t1 = fname.split("/")[-1]
     #l = len("track_three_to_test_core_")
     l = len("track_sixteen_frames_core_")
+    l = len("track_indfix_sixteenframe_core_")
     this_cor = int(t1[l:l+4]) #[fname.index('_'):]
-    if this_cor not in  [31]:
-        continue
+    #this_cor=31
+    #if this_cor not in  [31]:
+    #    continue
     print(this_cor)
     this_looper=looper.core_looper(directory=directory)
     trw.load_loop(this_looper,fname)
@@ -196,9 +197,14 @@ for nfile,fname in enumerate(file_list) :#[:3])
             ms = mini_scrubber(thtr,core_id)
             density = thtr.c([core_id],'density')
             tmap=rainbow_map(ms.ntimes)
-            for npart in core_31_baddies: #range(ms.nparticles)[::100]:
-                plt.plot( thtr.times[asort], density[npart,asort],c='k',linestyle=':',marker='*')
-            outname = 'image_tracks/rho_t_2_c%04d.png'%core_id
+            for sub in [0]:# range(20):
+                plt.clf()
+                for npart in range(sub,ms.nparticles):
+                    plt.plot( thtr.times[asort], density[npart,asort],c='k',linestyle=':',marker='*')
+            outname = 'image_tracks/rho_t_3_c%04d.png'%core_id
+            #plt.plot([0.00,0.04],[100,1e8],c='g')
+            #for nnn,ttt in enumerate(thtr.times):
+            #    plt.text(ttt, 1e8, '%d'%nnn)
             plt.yscale('log')
             plt.savefig(outname)
             print('saved '+outname)
