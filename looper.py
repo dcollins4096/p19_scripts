@@ -262,10 +262,12 @@ class snapshot():
             if not found_any:
                 raise
         region = self.get_region(self.frame)
-        self.pos = region['particle_position'][mask == 1]
-        self.vel = region['particle_velocity'][mask == 1]
         self.ind = region['particle_index'][mask == 1]
-        self.check_and_fix_bad_particles(mask)
+        args=np.argsort(self.ind)
+        self.ind=self.ind[args]
+        self.pos = region['particle_position'][mask == 1][args]
+        self.vel = region['particle_velocity'][mask == 1][args]
+        #self.check_and_fix_bad_particles(mask)
 
 
     def compute_relative_coords(self):
@@ -319,13 +321,13 @@ class snapshot():
         for field in fields_to_get:
             #initialize field values to -1.
             if field not in self.field_values:
-                self.field_values[field] = np.zeros(self.target_indices.size)-1
+                self.field_values[field] = np.zeros(self.ind.size)-1
                 number_of_new_fields += 1
 
         if number_of_new_fields == 0:
             return
 
-        good_index_sort_np = np.array(copy.copy(self.target_indices)).astype('int64')
+        good_index_sort_np = np.array(copy.copy(self.ind)).astype('int64')
         for grid in self.ds.index.grids[-1::-1]:
             grid_selector = np.zeros([3,good_index_sort_np.size],dtype='int32') #grid i,j,k index selector.
             particle_selector = np.zeros(good_index_sort_np.size,dtype='int32') #mask between all particles and this grid.
