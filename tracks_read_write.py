@@ -21,6 +21,8 @@ import looper
 reload(looper)
 import trackage
 reload(trackage)
+import time_kludge
+reload(time_kludge)
 #many1: frame_list = list(range(10,130,10)) + [125]
 #many1: core_list =  [ 120, 10, 308, 41, 44, 110, 1, 65], 
 if 0:
@@ -108,13 +110,14 @@ def load_loop(self,fname):
                        "sim_name",     
                        "frame_list",   
                        "core_list",    
-                       "directory",    
                        "target_frame", 
                        "out_prefix",   
                        "fields_from_grid"
                       ]:
             if value in fptr:
                 self.__dict__[value] = fptr[value].value
+        if self.directory is None:
+            self.directory = fptr['directory'].value
         #ti_grp=fptr.create_group('target_indices')
         #for core in self.target_indices:
         #    ti_grp.create_dataset(str(core),data=self.target_indices[core])
@@ -123,13 +126,18 @@ def load_loop(self,fname):
 
         for frame_name in fptr['snaps']:
             frame_number = int(frame_name.split()[1])
-            self.load(frame_number)
+            self.load(frame_number,dummy=True)
 
             for core_name in fptr['snaps'][frame_name]:
                 core_number = int(core_name.split()[1])
                 core_grp = fptr['snaps'][frame_name][core_name]
-                self.snaps[frame_number][core_number]=self.make_snapshot(frame_number,core_number)
+                self.snaps[frame_number][core_number]=self.make_snapshot(frame_number,core_number,
+                                                                        dummy_ds=True)
                 this_snap=self.snaps[frame_number][core_number]
+                if 'time' in core_grp:
+                    this_snap.time = core_grp['time'].value
+                else:
+                    this_snap.time = time_kludge.d[frame_number]
                 #this_snap.field_values={}
                 for val in ["core_id",
                             "frame",
@@ -142,25 +150,26 @@ def load_loop(self,fname):
                             "pos",
                             "R_mag", ]:
                     if val in core_grp:
-                        thisval = this_snap.ds.arr(core_grp[val].value,'code_length')
+                        #thisval = this_snap.ds.arr(core_grp[val].value,'code_length')
+                        thisval = yt.units.yt_array.YTArray(core_grp[val].value,'cm')
                         this_snap.__dict__[val]=thisval
                 for val in ["V_bulk",
                             "V_rel",
                             "V_radial"]:
                     if val in core_grp:
-                        thisval = this_snap.ds.arr(core_grp[val].value,'code_velocity')
+                        #thisval = this_snap.ds.arr(core_grp[val].value,'code_velocity')
+                        thisval = yt.units.yt_array.YTArray(core_grp[val].value,'cm/s')
                         this_snap.__dict__[val]=thisval
                 for val in core_grp['field_values']:
                     this_snap.field_values[val]=core_grp['field_values'][val].value
-
-
-
-        self.tr = trackage.track_manager(self)
-        for val in ['particle_ids','core_ids','frames','times']:
-            self.tr.__dict__[val] =fptr['track_manager'][val].value
-        self.tr.track_dict={}
-        for k in fptr['track_manager']['track_dict']:
-            self.tr.track_dict[k]=fptr['track_manager']['track_dict'][k].value
+            if self.tr is None:
+                self.tr = trackage.track_manager(self)
+            self.tr.ingest(this_snap)
+        #for val in ['particle_ids','core_ids','frames','times']:
+        #    self.tr.__dict__[val] =fptr['track_manager'][val].value
+        #self.tr.track_dict={}
+        #for k in fptr['track_manager']['track_dict']:
+        #    self.tr.track_dict[k]=fptr['track_manager']['track_dict'][k].value
 
     except:
         raise
