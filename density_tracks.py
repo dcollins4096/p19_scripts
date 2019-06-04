@@ -4,6 +4,7 @@ matplotlib.use('Agg')
 import yt
 import math
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import numpy as np
 import pdb
 nar = np.array
@@ -18,11 +19,13 @@ reload(trackage)
 import tracks_read_write as trw
 reload(trw)
 from davetools import *
+directory = '/home/dcollins/scratch/u05-r4-l4-128'
 plt.close('all')
 file_list=glob.glob('/home/dcollins/scratch/Paper19/particle_error/particle_error_test_c0031_threeframes.h5')
 file_list=glob.glob('/home/dcollins/scratch/Paper19/particle_error/track_indfix_sixteenframe_core_0031.h5')
-file_list=glob.glob('/scratch1/dcollins/Paper19/Datasets/track_indfix_sixteenframe_core_*.h5')
-directory = '/home/dcollins/scratch/u05-r4-l4-128'
+file_list=glob.glob('/home/dcollins/scratch/Paper19/particle_error/track_indfix_sixteenframe_core_0031.h5')
+file_list=glob.glob('/scratch1/dcollins/Paper19/track_index_fix/track_indfix_sixteenframe_core_*.h5')
+file_list=glob.glob('/home/dcollins/scratch/Paper19/track_index_fix/track_indfix_sixteenframe_core_*.h5')
 class parameter_package():
     def __init__(self,rho0=1,rho1=1,tc=1,tff_local=1,rho_c=1, tff_global=1):
         self.rho0   =rho0
@@ -38,7 +41,7 @@ class parameter_package():
         self.tff_global=tff_global
         self.tff_local=tff_local
         self.rho_c  =rho_c
-    def __str__(self):
+     def __str__(self):
         output = ""
         output += "rho0     =%0.2e\n"%rho0
         output += "rho1     =%0.2e\n"%rho1
@@ -49,7 +52,7 @@ class parameter_package():
         return output
 freefall = defaultdict(parameter_package)
 
-for nfile,fname in enumerate(file_list[:3]) :#[:3])
+for nfile,fname in enumerate(file_list) :#[:3])
     #0164.h5
     t1 = fname.split("/")[-1]
     #l = len("track_three_to_test_core_")
@@ -58,8 +61,8 @@ for nfile,fname in enumerate(file_list[:3]) :#[:3])
 
     this_cor = int(t1[l:l+4]) #[fname.index('_'):]
     #this_cor=31
-    #if this_cor not in  [12, 31]:
-    #    continue
+    if this_cor not in  [12]:#, 31]:
+        continue
     print(this_cor)
     this_looper=looper.core_looper(directory=directory)
     trw.load_loop(this_looper,fname)
@@ -71,14 +74,28 @@ for nfile,fname in enumerate(file_list[:3]) :#[:3])
     if 1:
         #time plots
         asort =  np.argsort(thtr.times)
+        n0=asort[0]
         tsorted = thtr.times[asort]
         for nc,core_id in enumerate(core_list):
             ms = trackage.mini_scrubber(thtr,core_id)
             density = thtr.c([core_id],'density')
             tmap=rainbow_map(ms.ntimes)
             plt.clf()
+            norm = mpl.colors.Normalize()
+            norm.autoscale( np.log10(density[:,n0]))
+            cmap = mpl.cm.jet
+            color_map = mpl.cm.ScalarMappable(norm=norm,cmap=cmap)
+
             for npart in range(ms.nparticles):
-                plt.plot( tsorted, density[npart,asort],c='k',linestyle=':',marker='*')
+                c = color_map.to_rgba(np.log10(density[npart,n0]))
+                #plt.plot( tsorted, density[npart,asort],c='k',linestyle=':',marker='*')
+                plt.plot( tsorted, density[npart,asort],c=c,linewidth=.1)#linestyle=':')
+            err= np.exp(np.log(density).std(axis=0)[asort])
+            #plt.plot(tsorted, density.mean(axis=0)[asort],c='k')
+            plt.errorbar(tsorted, density.mean(axis=0)[asort],c='k',yerr=err)
+            #plt.plot(tsorted, density.mean(axis=0),c='k')
+
+
 
 
             t0 = thtr.times[asort][0]
@@ -97,8 +114,14 @@ for nfile,fname in enumerate(file_list[:3]) :#[:3])
             plt.plot( tsorted, rhot, c='r')
             plt.text( tsorted[0], rho1, r'$tc = %0.2e \rho_c = %0.2e$'%(tc,rho_c))
             plt.text( tsorted[0], 0.5*rho1, r'$tc/tff = %0.2e$'%(tc/tff_global))
-            outname = 'image_tracks/rho_t_fit_c%04d.png'%(core_id)
-            plt.yscale('log')
-            plt.savefig(outname)
-            print('saved '+outname)
+            for i,n in enumerate(asort[0:1]):
+                timeline=plt.plot( [tsorted[i]]*2,[1,1e8],c=[0.5]*3,linewidth=0.1)
+                timetext=plt.text( tsorted[i], 1e8, 'n=%d'%thtr.frames[n])
+                outname = 'image_tracks/rho_t_fit2_c%04d_s%04d.png'%(core_id,i)
+                plt.yscale('log')
+                plt.savefig(outname)
+                timeline[0].remove()
+                timetext.remove()
+
+                print('saved '+outname)
 

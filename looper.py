@@ -299,8 +299,12 @@ class snapshot():
 
         m = self.field_values['density'].sum()
         shifted = loop_tools.shift_particles(self.ds,self.pos,shiftRight=False)
-        self.R_centroid = self.ds.arr([0,0,0],'code_length')
-        self.V_bulk = self.ds.arr([0,0,0],'code_velocity')
+        if self.ds is not None:
+            self.R_centroid = self.ds.arr([0,0,0],'code_length')
+            self.V_bulk = self.ds.arr([0,0,0],'code_velocity')
+        else:
+            self.R_centroid = yt.units.yt_array([0,0,0],'cm')
+            self.V_bulk =    yt.units.yt_array([0,0,0],'cm/s')
         for dim in range(3):
             self.R_centroid[dim] = (shifted[:,dim]*self.field_values['density']).sum()/m
             self.V_bulk[dim] = (self.vel[:,dim]*self.field_values['density']).sum()/m
