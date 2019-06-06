@@ -1,7 +1,8 @@
 import numpy as np
 nar = np.array
 def scatter_fit(plt,xin,yin,use_scatter = 'scatter',add_fit_label=False,label=None,c='b',fit_range=None,
-                text_loc=None, verbose=True, plot_points=True,plot_fit=True,plot_text=False,**kwargs):
+                text_loc=None, verbose=True, plot_points=True,plot_fit=True,plot_text=False,
+                log=True,**kwargs):
     """Plots a scatter plot of *yin* vs *xin*.  Overplots a linear power law fit.
     *c* gives the color argument to both scatter and line.
     *label* gives the label to the scatter plot.  Line plot gets no label
@@ -20,7 +21,7 @@ def scatter_fit(plt,xin,yin,use_scatter = 'scatter',add_fit_label=False,label=No
         cused = c
         fit_color = cused
     plot = None
-    if True:
+    if log is True:
         if fit_range is not None:
             OK = np.logical_and( x > fit_range[0], x < fit_range[1] )
             OK = np.logical_and( OK, y != 0 )
