@@ -1,5 +1,5 @@
 
-from go import *
+from starter2 import *
 import davetools as DT
 reload(DT)
 plt.close('all')

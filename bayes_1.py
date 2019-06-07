@@ -1,4 +1,4 @@
-from go import *
+from starter2 import *
 # for new ds.all_data() profile plot - 
 import core_dump
 def rs(arr):
