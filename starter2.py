@@ -6,7 +6,6 @@ reload(trackage)
 #from core_dump import *
 import yt
 
-directory = '/home/dcollins/scratch/u05-r4-l4-128'
 
 import looper
 reload(looper)

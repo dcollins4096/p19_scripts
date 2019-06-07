@@ -189,8 +189,10 @@ class snapshot():
         self.target_indices = weakref.proxy(loop.target_indices[core_id])
         if dummy_ds:
             self.ds=None
+            self.time = -1
         else:
             self.ds             = weakref.proxy(loop.load(frame,dummy=dummy_ds) )
+            self.time = self.ds['InitialTime']
         self.core_id        = core_id
         self.frame          = frame
 

@@ -13,7 +13,7 @@ for core in core_list:
     output_name = '%s_c%04d.h5'%(output_base,core)
     if os.path.exists(output_name):
         continue
-    this_looper = looper.core_looper(directory= dl.directory,
+    this_looper = looper.core_looper(directory= dl.enzo_directory,
                                      sim_name = 'u05',
                                      out_prefix = 'test',
                                      target_frame = 125,
