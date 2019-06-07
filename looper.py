@@ -24,6 +24,16 @@ from collections import defaultdict
 import weakref
 import trackage
 
+def get_all_nonzero(fname='n_particles.txt'):
+    fptr = open('n_particles.txt','r')
+    lines=fptr.readlines()
+    fptr.close()
+    parts = np.zeros([len(lines),2])
+    for n,line in enumerate(lines):
+        parts[n] = np.array(line.split(),dtype='int')
+    all_nonzero = parts[:,0][ parts[:,1] >0]
+    core_list = all_nonzero.astype('int')[::-1]
+    return core_list
             
 class core_looper():
     """We want to analyze the core pre-images for a bunch of frames.
