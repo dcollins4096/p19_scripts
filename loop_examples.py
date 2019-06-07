@@ -1,17 +1,5 @@
 
-import matplotlib
-matplotlib.use('Agg')
-import yt
-import math
-import matplotlib.pyplot as plt
-import numpy as np
-import pdb
-nar = np.array
-
-from importlib import reload
-
-import looper
-reload(looper)
+from go import *
 
 # Do this with python 3.
 # execfile is gone, do this instead:
@@ -27,21 +15,29 @@ reload(looper)
 # every core_id and frame in your instance of looper.core_looper.
 # 
 # So, if I want to print the centroid of each core, I'd do
-
+all_cores  =looper.get_all_nonzero()
+all_cores.sort()
+ni = int(sys.argv[1])
+core_list= all_cores[ni:ni+10]
+print("CORE_LIST", core_list)
+print(len(core_list))
+print(np.where(core_list==154))
+rm = rainbow_map(len(all_cores))
 #make an instance
-if 'this_looper' not in dir():
+#for THIS_CORE in core_list
+if 1:
     directory = '/scratch2/dcollins/Paper19_48/B02/u05-r4-l4-128'
     this_looper = looper.core_looper(directory= directory,
                                      sim_name = 'u05',
                                      out_prefix = 'test',
                                      target_frame = 125,
                                      frame_list = [0,1,2]+list(range(10,130,5))+[125],
-                                     core_list = [31],
-                                     fields_from_grid=['x','y','z']
+                                     core_list = core_list, #[THIS_CORE],
+                                     fields_from_grid=['x'] #,'y','z']
                                   )
     this_looper.get_target_indices(h5_name='u05_0125_peaklist.h5',
                                      bad_particle_list='bad_particles.h5')
-    this_looper.get_tracks()
+    #this_looper.get_tracks()
 
 #core_31_density_baddies=nar([1499257, 1597829, 1618375, 1622656, 1626883, 1631042, 1634500])
 #core_31_density_baddies=nar([1495097])
@@ -73,21 +69,6 @@ looper.core_looper.print_centroid = print_centroid #add your function to looper.
 
 #this decrator makes the following function get called
 #for all frames in core_looper.frame_list.
-@looper.frame_loop
-def full_proj(self, axis_list=[0,1,2]):
-    for axis in axis_list:
-        proj = self.ds.proj('density',axis,center='c')
-        pw = proj.to_pw(center = 'c',width=(1.0,'code_length'), origin='domain')
-        pw.set_cmap('density','gray')
-        radius_from_core = []
-        core_label = ""
-        for nc,core_number in enumerate(self.target_indices):
-            core_label += "c%04d_"%core_number
-            pw.annotate_select_particles(1.0, col='r', indices=self.target_indices[core_number])
-        outname = '%s_full_particles_%sn%04d'%(self.out_prefix,core_label,self.current_frame)
-        print( pw.save(outname))
-looper.core_looper.full_proj = full_proj
-this_looper.full_proj()
 
 
 @looper.particle_loop
@@ -97,8 +78,6 @@ def core_proj_follow(looper,snapshot, axis_list=[0,1,2], color='r'):
         pw = proj.to_pw(center = snapshot.R_centroid,width=(1.0,'code_length'), origin='domain')
         pw.set_cmap('density','gray')
         pw.annotate_sphere(snapshot.R_centroid,snapshot.R_mag.max(), circle_args={'color':color} ) #R_mag.max())
-        xax = looper.ds.coordinates.x_axis[ax]
-        yax = looper.ds.coordinates.x_axis[ax]
         pw.annotate_text(snapshot.R_centroid,
                          "%d"%snapshot.core_id,text_args={'color':color}, 
                          inset_box_args={'visible':False},
