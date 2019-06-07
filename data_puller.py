@@ -5,18 +5,19 @@ all_nonzero = looper.get_all_nonzero()
 #many1: core_list =  [ 120, 10, 308, 41, 44, 110, 1, 65], 
 #frame 120 core 96
 core_list = all_nonzero.astype('int')[-3:]
+frame_list = [1,125]
 fields = ['x','y','z','velocity_magnitude','magnetic_field_strength', 'velocity_divergence']
+output_base = "some_track_set"
 #core_list=[31]
 for core in core_list:
-    directory = '/scratch2/dcollins/Paper19_48/B02/u05-r4-l4-128'
-    output_name = 'track_indfix_sixteenframe_core_%04d.h5'%core
+    output_name = '%s_c%04d.h5'%(output_base,core)
     if os.path.exists(output_name):
         continue
     this_looper = looper.core_looper(directory= dl.directory,
                                      sim_name = 'u05',
                                      out_prefix = 'test',
                                      target_frame = 125,
-                                     frame_list = [0,1,2]+list(range(10,130,10))+[125],
+                                     frame_list = frame_list,
                                      core_list =  [core],# core_list,
                                      fields_from_grid=fields,
                                   )
