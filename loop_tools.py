@@ -259,7 +259,6 @@ class SelectParticleCallback(PlotCallback):
                     shifted_field[ndim][particles_to_shift] += data.ds.domain_width[dim]
                 #If the plot is to the left
                 delta = data.ds.domain_left_edge[dim] - lower_lim[ndim]
-                print("DELTA down", dim, delta, lower_lim[ndim])
                 if delta > dx_min:
                     delta = data.ds.domain_right_edge[dim] - delta
                     particles_to_shift = np.where(shifted_field[ndim] > delta)
