@@ -107,7 +107,8 @@ for nfile,fname in enumerate(file_list):
 
         plt.close('all')
         fig,ax=plt.subplots(1,1)
-        norm = mpl.colors.LogNorm(vmin=1,vmax=velhist_global.max())
+        #norm = mpl.colors.LogNorm(vmin=1,vmax=velhist_global.max())
+        norm = mpl.colors.Normalize(vmin=1,vmax=velhist_global.max())
         cmap=mpl.cm.jet
         cmap.set_under('w')
         p=ax.pcolormesh(rrr,vvv,velhist_global,norm=norm)

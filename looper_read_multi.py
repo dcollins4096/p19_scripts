@@ -1,4 +1,4 @@
-from GL import *
+from starter1 import *
 import matplotlib
 matplotlib.use('Agg')
 import yt

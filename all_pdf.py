@@ -1,5 +1,5 @@
 
-from GL import *
+from starter1 import *
 # for new ds.all_data() profile plot - 
 def rs(arr):
     return arr.reshape(arr.shape + (1,)) 

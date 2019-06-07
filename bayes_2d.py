@@ -1,5 +1,5 @@
 
-from GL import *
+from starter1 import *
 import matplotlib.colors as colors
 import yt
 import looper
