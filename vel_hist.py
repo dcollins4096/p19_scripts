@@ -91,6 +91,9 @@ for nfile,fname in enumerate(file_list):
                     snap.compute_relative_coords()
                 if len(snap.R_mag) < 3:
                     continue
+                if snap.time == 0:
+                    print("NO ZERO")
+                    continue
 
                 #makes a 2d histogram, like phase diagrams in yt.
                 h, xe, ye = np.histogram2d(snap.R_mag,snap.V_radial, bins=(radbins,velbins))
