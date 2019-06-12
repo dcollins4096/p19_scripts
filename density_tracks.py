@@ -5,15 +5,16 @@ import data_locations as dl
 reload(dl)
 
 file_list=glob.glob('%s/track_indfix_sixteenframe_core_*.h5'%dl.snapshot_location)
+file_list=glob.glob('%s/all/*.h5'%dl.snapshot_base)
 plt.close('all')
 
 
 for nfile,fname in enumerate(file_list) :#[:3])
 
     #this is crude
-    t1 = fname.split("/")[-1]
-    l = len("track_indfix_sixteenframe_core_")
-    this_cor = int(t1[l:l+4]) #[fname.index('_'):]
+    #t1 = fname.split("/")[-1]
+    #l = len("track_indfix_sixteenframe_core_")
+    #this_cor = int(t1[l:l+4]) #[fname.index('_'):]
     #if this_cor not in  [12]:#, 31]:
     #    continue
     #print(this_cor)
@@ -78,16 +79,18 @@ for nfile,fname in enumerate(file_list) :#[:3])
                 print('saved '+outname)
 
                 frame = thtr.frames[n]
-                frame = i #you suck.
-                basedir = "/home/dcollins/RESEARCH2/Paper19_47_overlap/0000_density_tracks/x/ALL"
+                frame = i #this is bad code.
+                basedir = os.environ['HOME']+'/PigPen'
                 core_dir = "%s/c%04d"%(basedir,core_id)
+                if not os.path.exists(core_dir):
+                    os.mkdir(core_dir)
                 image = "%s/test_full_particles_c%04d_n%04d_Projection_x_density.png"%(core_dir,core_id,frame)
-                img1 = mpimg.imread(image) 
-                img2 = mpimg.imread(outname) 
-                both = np.zeros( [ max([img1.shape[0],img2.shape[0]]), img1.shape[1]+img2.shape[1],4])
-                both[ 0:img1.shape[0] , 0:img1.shape[1]]=img1
-                both[ 0:img2.shape[0] , img1.shape[1]:]=img2
-                oname2 = "image_tracks/density_2_c%04d_n%04d"%(core_id,frame)
-                print(oname2)
-                plt.imsave(oname2,both)
+                #img1 = mpimg.imread(image) 
+                #img2 = mpimg.imread(outname) 
+                #both = np.zeros( [ max([img1.shape[0],img2.shape[0]]), img1.shape[1]+img2.shape[1],4])
+                #both[ 0:img1.shape[0] , 0:img1.shape[1]]=img1
+                #both[ 0:img2.shape[0] , img1.shape[1]:]=img2
+                #oname2 = "image_tracks/density_2_c%04d_n%04d"%(core_id,frame)
+                #print(oname2)
+                #plt.imsave(oname2,both)
 
