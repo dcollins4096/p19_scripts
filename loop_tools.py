@@ -243,8 +243,8 @@ class SelectParticleCallback(PlotCallback):
         shifted_field_x = reg[pt, field_x]
         shifted_field_y = reg[pt, field_y]
         shifted_field = [shifted_field_x, shifted_field_y]
-        lower_lim = data.ds.arr([xx0,yy0],'code_length')
-        upper_lim = data.ds.arr([xx1,yy1],'code_length')
+        lower_lim = data.ds.arr([x0,y0],'code_length')
+        upper_lim = data.ds.arr([x1,y1],'code_length')
         dx_min = data.ds.index.get_smallest_dx()*0.1
 
         for ndim,dim in enumerate([xax,yax]):
