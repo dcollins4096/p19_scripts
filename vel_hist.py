@@ -6,7 +6,8 @@ plt.close('all')
 #data_location = '/scratch1/dcollins/Paper19/Datasets/'
 import data_locations as dl
 reload(dl)
-file_list=glob.glob('%s/track_indfix_sixteenframe_core_*.h5'%dl.snapshot_location)
+#file_list=glob.glob('%s/track_indfix_sixteenframe_core_*.h5'%dl.snapshot_location)
+file_list=glob.glob('/home/dcollins/scratch/Paper19/all_frames/track_all_frames_*.h5')
 
 #This keeps track of the min and max velocity.
 if 'ext_v' not in dir():
@@ -51,13 +52,13 @@ velhist_global = np.zeros([nvel_bins,nrad_bins])
 for nfile,fname in enumerate(file_list):
     
     #this is a crude way to get the core_id for debug purpose
-    t1 = fname.split("/")[-1]
-    l = len("track_indfix_sixteenframe_core_")
-    this_core = int(t1[l:l+4]) #[fname.index('_'):]
+    #t1 = fname.split("/")[-1]
+    #l = len("track_indfix_sixteenframe_core_")
+    #this_core = int(t1[l:l+4]) #[fname.index('_'):]
     #this_core=31
     #if this_core not in  [12]:#, 31]:
     #    continue
-    print(this_core)
+    #print(this_core)
 
     #This builds the looper object
     this_looper=looper.core_looper(directory=dl.enzo_directory)
@@ -137,6 +138,7 @@ for nfile,fname in enumerate(file_list):
         outname = 'image_tracks/vel_hist_c%04d.png'%core_id
         print(outname)
         fig.savefig(outname)
+        print("saved "+outname)
         plt.close('all')
         
         #now we'll plot the multi-core version
@@ -150,4 +152,6 @@ for nfile,fname in enumerate(file_list):
         ax.set_yscale('symlog',linthreshy=vel_linthresh)
         ax.set_xscale('symlog',linthreshx=2*rmin)
         cbar=fig.colorbar(p)
-        fig.savefig('bigtest.png')
+        outname = 'bigtest.png'
+        fig.savefig(outname)
+        print("saved "+outname)
