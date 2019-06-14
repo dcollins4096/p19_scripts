@@ -1,5 +1,5 @@
 
-from go import *
+from starter2 import *
 
 # Do this with python 3.
 # execfile is gone, do this instead:
@@ -17,8 +17,8 @@ from go import *
 # So, if I want to print the centroid of each core, I'd do
 all_cores  =looper.get_all_nonzero()
 all_cores.sort()
-ni = int(sys.argv[1])
-core_list= all_cores[ni:ni+10]
+#ni = int(sys.argv[1])
+core_list=[79]# all_cores[ni:ni+10]
 print("CORE_LIST", core_list)
 print(len(core_list))
 print(np.where(core_list==154))
@@ -31,7 +31,7 @@ if 1:
                                      sim_name = 'u05',
                                      out_prefix = 'test',
                                      target_frame = 125,
-                                     frame_list = [0,1,2]+list(range(10,130,5))+[125],
+                                     frame_list = list(range(11,120))+[125],
                                      core_list = core_list, #[THIS_CORE],
                                      fields_from_grid=['x'] #,'y','z']
                                   )
@@ -74,20 +74,25 @@ looper.core_looper.print_centroid = print_centroid #add your function to looper.
 @looper.particle_loop
 def core_proj_follow(looper,snapshot, axis_list=[0,1,2], color='r'):
     for ax in axis_list:
-        proj = snapshot.ds.proj('density',ax,center=snapshot.R_centroid)
+        scale_min = snapshot.ds.arr(0.05,'code_length')
+        scale = max([snapshot.R_mag.max(), scale_min])
+        sph = snapshot.ds.sphere(snapshot.R_centroid,scale)
+        proj = snapshot.ds.proj('density',ax,center=snapshot.R_centroid, data_source = sph)
         pw = proj.to_pw(center = snapshot.R_centroid,width=(1.0,'code_length'), origin='domain')
+        pw.zoom(1./scale.v)
+        #pw = proj.to_pw(center = 'c',width=(1.0,'code_length'), origin='domain')
         pw.set_cmap('density','gray')
-        pw.annotate_sphere(snapshot.R_centroid,snapshot.R_mag.max(), circle_args={'color':color} ) #R_mag.max())
-        pw.annotate_text(snapshot.R_centroid,
-                         "%d"%snapshot.core_id,text_args={'color':color}, 
-                         inset_box_args={'visible':False},
-                         coord_system='data')
+        #pw.annotate_sphere(snapshot.R_centroid,snapshot.R_mag.max(), circle_args={'color':color} ) #R_mag.max())
+        #pw.annotate_text(snapshot.R_centroid,
+        #                 "%d"%snapshot.core_id,text_args={'color':color}, 
+        #                 inset_box_args={'visible':False},
+        #                 coord_system='data')
         pw.annotate_select_particles(1.0, col=color, indices=snapshot.target_indices)
         outname = "%s_c%04d_n%04d_centered"%(looper.out_prefix,snapshot.core_id,snapshot.frame)
         print(pw.save(outname))
     return pw
 looper.core_looper.core_proj_follow = core_proj_follow
-
+this_looper.core_proj_follow(axis_list=[0])
 @looper.particle_loop
 def core_circle(self, axis_list=[0,1,2]):
     for axis in axis_list:
