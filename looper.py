@@ -92,6 +92,7 @@ class core_looper():
         self.snaps = defaultdict(dict) 
         #    defaultdict(whatev) is a dict, but makes a new (whatev) by default
         self.ds_list={}
+        self.all_data={}
 
         #read from save file.
         if savefile is not None:
@@ -108,7 +109,7 @@ class core_looper():
             self.current_frame = self.frame_list[0]
         return self.current_frame
 
-    def load(self,frame=None,dummy=False):
+    def load(self,frame=None,dummy=False,derived=[]):
         """runs yt.load, and saves the ds so we don't have multiples for many cores."""
         if dummy:
             self.ds = None
@@ -121,6 +122,8 @@ class core_looper():
             self.ds = self.ds_list[frame]
         else:
             self.ds = yt.load(self.filename)
+            for add_derived_field in derived:
+                add_derived_field(self.ds)
             self.ds_list[frame] = self.ds
         return self.ds
 
