@@ -67,7 +67,8 @@ class core_looper():
                  out_prefix="",
                  frame_list=[], core_list=None, target_frame=0,
                  fields_from_grid = [], 
-                 individual_particle_tracks=False):
+                 individual_particle_tracks=False,
+                 derived=[]):
         #set defaults and/or arguments.
         self.current_frame = None
         self.data_template = data_template
@@ -93,6 +94,7 @@ class core_looper():
         #    defaultdict(whatev) is a dict, but makes a new (whatev) by default
         self.ds_list={}
         self.all_data={}
+        self.derived=derived
 
         #read from save file.
         if savefile is not None:
@@ -122,6 +124,8 @@ class core_looper():
             self.ds = self.ds_list[frame]
         else:
             self.ds = yt.load(self.filename)
+            if derived is None:
+                derived = self.derived
             for add_derived_field in derived:
                 add_derived_field(self.ds)
             self.ds_list[frame] = self.ds
