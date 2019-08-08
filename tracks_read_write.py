@@ -71,6 +71,7 @@ def save_loop(self,fname):
                 snp=grp.create_group("core %d"%core)
                 this_snap = self.snaps[frame][core]
                 for val in ["core_id",
+                            "time",
                             "frame",
                             "mask",
                             "pos",

@@ -6,10 +6,18 @@ reload(dl)
 
 #file_list=glob.glob('%s/track_indfix_sixteenframe_core_*.h5'%dl.snapshot_location)
 file_list=glob.glob('/home/dcollins/scratch/Paper19/all_frames/track_all_frames_*.h5')
+file_list = ['./sphere2.h5']
+file_list = ['./u16_sphere2_t2.h5']
+out_prefix = 'u16_sphere2_t2'
+file_list = ['./u17_test.h5']
+out_prefix = 'u17_linear'
 plt.close('all')
 
 
-for nfile,fname in enumerate(file_list) :#[:3])
+
+
+
+for nfile,fname in enumerate(file_list):
 
     #this is crude
     #t1 = fname.split("/")[-1]
@@ -41,7 +49,7 @@ for nfile,fname in enumerate(file_list) :#[:3])
             cmap = mpl.cm.jet
             color_map = mpl.cm.ScalarMappable(norm=norm,cmap=cmap)
 
-            for npart in range(ms.nparticles)[::100]:
+            for npart in list(range(ms.nparticles))[::100]:
                 c = color_map.to_rgba(np.log10(density[npart,n0]))
                 #ax.plot( tsorted, density[npart,asort],c='k',linestyle=':',marker='*')
                 ax.plot( tsorted, density[npart,asort],c=c,linewidth=.1)#linestyle=':')
@@ -50,25 +58,27 @@ for nfile,fname in enumerate(file_list) :#[:3])
             #ax.errorbar(tsorted, density.mean(axis=0)[asort],c='k',yerr=err)
             #ax.plot(tsorted, density.mean(axis=0),c='k')
 
+            test_index = np.where( tsorted < 1.5)[0][-1]
             t0 = thtr.times[asort][0]
-            t1 = thtr.times[asort][-1]
-            rho0 = np.mean(density[:,asort[0]])
-            rho1 = np.mean(density[:,asort[-1]])
+            t1 = thtr.times[asort][test_index]
+            rho0 =1.1 #10 # np.mean(density[:,asort[0]])
+            rho1 = density[:,test_index].max() # np.mean(density[:,asort[-1]])
             alpha = 1.8
-            tc = t1*(1-(rho1/rho0)**(-1./alpha))**-0.5
-            G=1620./(4*np.pi)
+            tc =t1*(1-(rho1/rho0)**(-1./alpha))**-0.5
+            G=1 #np.pi*4#1620./(4*np.pi)
             tff_global = np.sqrt(3*np.pi/(32*G*1))
             tff_local = np.sqrt(3*np.pi/(32*G*rho0))
+            #tc=tff_local #kludge
             rhot = rho0*(1-(tsorted/tc)**2)**-alpha
             rho_c = 3*np.pi/(32*G*tc**2)
-            ax.plot( tsorted, rhot, c='r',label=r'$tc/tff = %0.2e$'%(tc/tff_global))
 
-            ax.plot( tsorted, rhot, c='r',label=r'$tc/tff = %0.2e$'%(tc/tff_global))
+            ok = np.isnan(rhot)==False
+            ax.plot( tsorted[ok], rhot[ok], c='r',label=r'$tc/tff = %0.2e$'%(tc/tff_local))
             #ax.text( tsorted[0], rho1, r'$tc = %0.2e \rho_c = %0.2e$'%(tc,rho_c))
             #ax.text( tsorted[0], 0.5*rho1, 
             ax.legend(loc=0)
             axbonk(ax,xscale='linear',yscale='log',xlabel='t',ylabel=r'$\rho$')
-            oname = "image_tracks/density_4_c%04d_n%04d"%(core_id,frame)
+            oname = "test2/%s_density_4_c%04d"%(out_prefix,core_id)
             fig.savefig(oname)
 #           for i,n in enumerate(asort):
 #               timeline=plt.plot( [tsorted[i]]*2,[1,1e8],c=[0.5]*3,linewidth=0.1)

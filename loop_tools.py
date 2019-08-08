@@ -123,6 +123,8 @@ def shift_particles(ds, position,shift = np.zeros(3),shiftRight = False):
         delta_x = nique[1:] - nique[0:-1]
         max_delta_x = delta_x.max()
         break_index = np.where(delta_x == max_delta_x)
+        if len(break_index) > 1:
+            break_index = break_index[0]
         if max_delta_x > max_dx:
            if shiftRight:
               break_x = nique[break_index[0]]
@@ -180,14 +182,14 @@ def deposit_target_particles_1(field, data):
     data.set_field_parameter('timer',t0+[t1])
     return data.apply_units(d, field.units)
 
-yt.add_field(      ("deposit","deposit_target_particles"),
-#yt.add_field(      'dp1',
-         function = deposit_target_particles_1,
-         validators = [yt.ValidateSpatial(), 
-                       yt.ValidateParameter('indices_late'), 
-                       yt.ValidateParameter('mask_to_get'), 
-                       yt.ValidateGridType()],
-         display_name = "target_particles",sampling_type='cell')
+#yt.add_field(      ("deposit","deposit_target_particles"),
+##yt.add_field(      'dp1',
+#         function = deposit_target_particles_1,
+#         validators = [yt.ValidateSpatial(), 
+#                       yt.ValidateParameter('indices_late'), 
+#                       yt.ValidateParameter('mask_to_get'), 
+#                       yt.ValidateGridType()],
+#         display_name = "target_particles",sampling_type='cell')
 
 class SelectParticleCallback(PlotCallback):
     _type_name = "select_particles"

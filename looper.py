@@ -16,13 +16,16 @@ import particle_grid_mask
 import loop_tools
 reload(loop_tools)
 import h5py
-from yt.analysis_modules.level_sets.api import *
+#from yt.analysis_modules.level_sets.api import *
+from yt.data_objects.level_sets import *
 import copy 
 import pdb
 from importlib import reload
 from collections import defaultdict
 import weakref
 import trackage
+import tracks_read_write
+import os
 
 def get_all_nonzero(fname='n_particles.txt'):
     fptr = open('n_particles.txt','r')
@@ -96,22 +99,33 @@ class core_looper():
         self.all_data={}
         self.derived=derived
 
-        #read from save file.
+        self.shift = True
+
         if savefile is not None:
-            fptr = open(savefile,'r')
-            lines = fptr.readlines()
-            fptr.close()
-            for line in lines:
-                line = line.strip() #clean off white space
-                #treat each line as a command to run on 'self'
-                exec("self.%s"%sline)
+            if not os.path.exists(savefile):
+                print("No such file "+savefile)
+            else:
+                tracks_read_write.load_loop(self,savefile)
+
+        #read from save file.
+        #if savefile is not None:
+        #    fptr = open(savefile,'r')
+        #    lines = fptr.readlines()
+        #    fptr.close()
+        #    for line in lines:
+        #        line = line.strip() #clean off white space
+        #        #treat each line as a command to run on 'self'
+        #        exec("self.%s"%sline)
+
+    def save(self,fname = "TEST.h5"):
+        tracks_read_write.save_loop(self,fname)
 
     def get_current_frame(self):
         if self.current_frame is None:
             self.current_frame = self.frame_list[0]
         return self.current_frame
 
-    def load(self,frame=None,dummy=False,derived=[]):
+    def load(self,frame=None,dummy=False,derived=None):
         """runs yt.load, and saves the ds so we don't have multiples for many cores."""
         if dummy:
             self.ds = None
@@ -120,15 +134,20 @@ class core_looper():
         if frame is None:
             frame = self.get_current_frame()
         self.filename = self.data_template%(self.directory,frame,frame)
+        new_ds = True
         if frame in self.ds_list:
-            self.ds = self.ds_list[frame]
-        else:
+            if self.ds_list[frame] is not None:
+                self.ds = self.ds_list[frame]
+                new_ds = False
+        if new_ds:
             self.ds = yt.load(self.filename)
             if derived is None:
                 derived = self.derived
             for add_derived_field in derived:
                 add_derived_field(self.ds)
             self.ds_list[frame] = self.ds
+        if True:
+            self.ds.periodicity = (True,True,True)
         return self.ds
 
     def get_target_indices(self,target_frame=None,core_list=None,h5_name=None, peak_radius=1.5,
@@ -317,7 +336,10 @@ class snapshot():
             self.get_particle_values_from_grid()
 
         m = self.field_values['density'].sum()
-        shifted = loop_tools.shift_particles(self.ds,self.pos,shiftRight=False)
+        if self.loop.shift:
+            shifted = loop_tools.shift_particles(self.ds,self.pos,shiftRight=False)
+        else:
+            shifted = copy.copy(self.pos)
         if self.ds is not None:
             self.R_centroid = self.ds.arr([0,0,0],'code_length')
             self.V_bulk = self.ds.arr([0,0,0],'code_velocity')
@@ -412,14 +434,14 @@ class snapshot():
 def frame_loop(function):
     def wrapper(self,*args,**kwargs):
         for self.current_frame in self.frame_list:
-            ds = self.load()
+            self.ds = self.load(self.current_frame)
             function(self,*args,**kwargs)
     return wrapper
 
 def particle_loop(function):
     def wrapper(looper,*args,**kwargs):
         for frame in looper.frame_list:
-            ds = looper.load()
+            self.ds = looper.load(frame=frame)
             #usually returns 'all_data'
             region = looper.get_region()
             for core_id in looper.core_list:

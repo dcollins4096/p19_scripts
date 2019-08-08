@@ -62,7 +62,7 @@ def tensor_derivative(data,fields1,fields2):
     iP1 = slice(2,None)
     all = slice(1,-1)
     all_all=[all]*3
-    out = [na.zeros(data[fields1[0]].shape)]*3
+    out = [np.zeros(data[fields1[0]].shape)]*3
     dxi=1./(2*data.dds )
     for j,fj in enumerate(fields2):
         for i, fi in enumerate(fields1):
@@ -82,7 +82,7 @@ def GradScalar(V, dx_in):
         act=slice(1,-1,None)      #active region
         width = 2
     dx = nar(dx_in)*width
-    output = [na.zeros( V.shape ),na.zeros( V.shape ),na.zeros( V.shape ) ]
+    output = [np.zeros( V.shape ),np.zeros( V.shape ),np.zeros( V.shape ) ]
  
     #dV/dx \hat{x}
     dVdX = 1./dx[0]*(V[SR,act,act] - V[SL,act,act])
@@ -98,8 +98,9 @@ def GradScalar(V, dx_in):
     return output
 
 
-def Curl(V,dx_in):
-    """takes the curl of vector field V"""
+def Curl(V,dx_in,component=None):
+    """takes the curl of vector field V.
+    Return the component if present, vector if not."""
     #slice(start,stop,step), None defaults to everything
     if True:
         #Centered difference: dv/dx_{i} = 1/(2 dx)(v_{i+1} - v_{i-1})
@@ -108,19 +109,25 @@ def Curl(V,dx_in):
         act=slice(1,-1,None)      #active region
         width = 2
     dx = nar(dx_in)*width
-    output = [na.zeros( V[1].shape ),na.zeros( V[1].shape ),na.zeros( V[1].shape ) ]
+    output = [np.zeros_like( V[0]/dx_in[0]),np.zeros_like( V[0]/dx_in[0] ),np.zeros_like( V[0]/dx_in[0] ) ]
+
  
     #didj == dV_i/dx_j
-    d2d1 = 1./dx[1]*(V[2][act,SR,act] - V[2][act,SL,act])
-    d1d2 = 1./dx[2]*(V[1][act,act,SR] - V[1][act,act,SL])
-    output[0][act,act,act] = d2d1 - d1d2 
-    d0d2 = 1./dx[2]*(V[0][act,act,SR] - V[0][act,act,SL])
-    d2d0 = 1./dx[0]*(V[2][SR,act,act] - V[2][SL,act,act])
-    output[1][act,act,act] = d0d2 - d2d0 
+    if component in [0,None]:
+        d2d1 = 1./dx[1]*(V[2][act,SR,act] - V[2][act,SL,act])
+        d1d2 = 1./dx[2]*(V[1][act,act,SR] - V[1][act,act,SL])
+        output[0][act,act,act] = d2d1 - d1d2 
+    if component in [1,None]:
+        d0d2 = 1./dx[2]*(V[0][act,act,SR] - V[0][act,act,SL])
+        d2d0 = 1./dx[0]*(V[2][SR,act,act] - V[2][SL,act,act])
+        output[1][act,act,act] = d0d2 - d2d0 
 
-    d1d0 = 1./dx[0]*(V[1][SR,act,act] - V[1][SL,act,act])
-    d0d1 = 1./dx[1]*(V[0][act,SR,act] - V[0][act,SL,act])
-    output[2][act,act,act] = d1d0 - d0d1
+    if component in [2,None]:
+        d1d0 = 1./dx[0]*(V[1][SR,act,act] - V[1][SL,act,act])
+        d0d1 = 1./dx[1]*(V[0][act,SR,act] - V[0][act,SL,act])
+        output[2][act,act,act] = d1d0 - d0d1
+    if component is not None:
+        output = output[component]
     return output
 
 def Cross(v1,v2):
@@ -147,7 +154,7 @@ def _DivArray(array, dx, dy=None, dz=None,hydromethod=2):
         dz = dx
     f += array[2][1:-1,1:-1,sl_right]/dz 
     f -= array[2][1:-1,1:-1,sl_left ]/dz 
-    new_field = na.zeros(array[0].shape, dtype='float64') 
+    new_field = np.zeros(array[0].shape, dtype='float64') 
     new_field[1:-1,1:-1,1:-1] = f 
     return new_field 
 
