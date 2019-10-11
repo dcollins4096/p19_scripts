@@ -39,9 +39,14 @@ class extents():
             print("Extent error: max")
 
 
-def axbonk(ax,xscale='linear',yscale='linear',xlabel='X',ylabel='Y',xlim=None,ylim=None):
+def axbonk(ax,xscale='linear',yscale='linear',xlabel='X',ylabel='Y',xlim=None,ylim=None,
+          linthreshx=0.1,linthreshy=0.1):
     ax.set_xscale(xscale)
     ax.set_yscale(yscale)
+    if xscale == 'symlog':
+        ax.set_xscale(xscale,linthreshx=linthreshx)
+    if yscale == 'symlog':
+        ax.set_yscale(yscale,linthreshy=linthreshy)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     ax.set_xlim(xlim)
@@ -402,11 +407,15 @@ def psave(ax,name):
     print(name)
     ax.savefig(name)
 
-def plave(array,filename,axis=None,colorbar=True,clf=True, zlim=None, label="Value"):
+def plave(array,filename,axis=None,ax=None,colorbar=True, zlim=None, label="Value",scale='linear',ticks_off=False,
+         linthresh=1.):
     """plot and save.  Takes *array*, saves an image and saves it in *filename*
     *zlim* = [a,b] scales the colorbar form a to b."""
-    if clf:
-        plt.clf()
+    save_fig = False
+    if ax is None:
+        fig, ax = plt.subplots(1,1)
+        save_fig=True
+
     if len(array.shape) == 2:
         array_2d = array
     else:
@@ -416,25 +425,36 @@ def plave(array,filename,axis=None,colorbar=True,clf=True, zlim=None, label="Val
         #array_2d = np.flipud(np.sum( array , axis=axis).transpose())
         array_2d = np.sum( array , axis=axis)
 
-
-    #plt.imshow(np.flipud(array_2d.transpose()), interpolation='nearest')#, origin='lower')
-    if zlim is not None:
-        plot = plt.imshow(array_2d, interpolation='nearest', origin='lower', vmin=zlim[0], vmax=zlim[1])
+    norm = None
+    cmap = mpl.cm.gray
+    if zlim is None:
+        zlim = [array_2d.min(),array_2d.max()]
+    if scale is 'linear':
+        norm=mpl.colors.Normalize(vmin=zlim[0], vmax=zlim[1])
+    elif scale is 'log':
+        norm=mpl.colors.LogNorm(vmin=zlim[0], vmax=zlim[1])
+    elif scale is 'symlog':
+        norm=mpl.colors.SymLogNorm(linthresh,vmin=zlim[0], vmax=zlim[1])
+    plot = ax.imshow(array_2d, interpolation='nearest', origin='lower', norm=norm,cmap=cmap)
+    if not ticks_off:
+        ax.set_yticks(range(0,array_2d.shape[0],5))
+        ax.set_xticks(range(0,array_2d.shape[1],5))
     else:
-        plot = plt.imshow(array_2d, interpolation='nearest', origin='lower')
-    plt.yticks(range(0,array_2d.shape[0],5))
-    plt.xticks(range(0,array_2d.shape[1],5))
+        ax.set_xticks([])
+        ax.set_yticks([])
     print(filename)
     norm = None
-    if zlim is not None:
-        norm=mpl.colors.Normalize(vmin=zlim[0], vmax=zlim[1])
     if colorbar:
         colorbar = plt.colorbar(plot, norm=norm)
         colorbar.set_label(label)
         if zlim is not None:
             colorbar.set_clim(zlim[0], zlim[1])
-    plt.savefig(filename)
-    print(filename)
+
+
+    if save_fig:
+        fig.savefig(filename)
+        plt.close(fig)
+        print(filename)
 
 def wp(axes,number,index_only=False):
     """Which Plot.  Takes 2d list *axes* and returns the row-major *number* element.
