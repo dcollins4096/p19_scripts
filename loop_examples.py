@@ -72,16 +72,16 @@ looper.core_looper.print_centroid = print_centroid #add your function to looper.
 
 
 @looper.particle_loop
-def core_proj_follow(looper,snapshot, axis_list=[0,1,2], color='r'):
+def core_proj_follow(looper,snapshot, field='density', axis_list=[0,1,2], color='r'):
     for ax in axis_list:
         scale_min = snapshot.ds.arr(0.05,'code_length')
         scale = max([snapshot.R_mag.max(), scale_min])
         sph = snapshot.ds.sphere(snapshot.R_centroid,scale)
-        proj = snapshot.ds.proj('density',ax,center=snapshot.R_centroid, data_source = sph)
+        proj = snapshot.ds.proj(field,ax,center=snapshot.R_centroid, data_source = sph)
         pw = proj.to_pw(center = snapshot.R_centroid,width=(1.0,'code_length'), origin='domain')
         pw.zoom(1./scale.v)
         #pw = proj.to_pw(center = 'c',width=(1.0,'code_length'), origin='domain')
-        pw.set_cmap('density','gray')
+        pw.set_cmap(field,'gray')
         #pw.annotate_sphere(snapshot.R_centroid,snapshot.R_mag.max(), circle_args={'color':color} ) #R_mag.max())
         #pw.annotate_text(snapshot.R_centroid,
         #                 "%d"%snapshot.core_id,text_args={'color':color}, 

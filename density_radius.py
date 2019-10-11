@@ -5,25 +5,16 @@ import data_locations as dl
 reload(dl)
 
 #file_list=glob.glob('%s/track_indfix_sixteenframe_core_*.h5'%dl.snapshot_location)
-#file_list=glob.glob('/home/dcollins/scratch/Paper19/all_frames/track_all_frames_*.h5')
-gloob='/home/dcollins/scratch/Paper19/all_frames/track_all_frames_c0079.h5'
-gloob='/Volumes/deep7/RESEARCH2/Paper19_47_overlap/2019-07-24-sphere/*h5'
-
-file_list=glob.glob(gloob)
 file_list=glob.glob('/home/dcollins/scratch/Paper19/all_frames/track_all_frames_*.h5')
 file_list = ['./sphere2.h5']
 file_list = ['./u16_sphere2_t2.h5']
 out_prefix = 'u16_sphere2_t2'
-file_list = ['./u17_test.h5']
+file_list = ['./u17_sphere_linear.h5']
 out_prefix = 'u17_linear'
 plt.close('all')
-output_dir='sphere'
 
 
-
-
-
-for nfile,fname in enumerate(file_list):
+for nfile,fname in enumerate(file_list) :#[:3])
 
     #this is crude
     #t1 = fname.split("/")[-1]
@@ -59,16 +50,15 @@ for nfile,fname in enumerate(file_list):
                 c = color_map.to_rgba(np.log10(density[npart,n0]))
                 #ax.plot( tsorted, density[npart,asort],c='k',linestyle=':',marker='*')
                 ax.plot( tsorted, density[npart,asort],c=c,linewidth=.1)#linestyle=':')
-            #err= np.exp(np.log(density).std(axis=0)[asort])
+            err= np.exp(np.log(density).std(axis=0)[asort])
             ax.plot(tsorted, density.mean(axis=0)[asort],c='k')
             #ax.errorbar(tsorted, density.mean(axis=0)[asort],c='k',yerr=err)
             #ax.plot(tsorted, density.mean(axis=0),c='k')
 
-            test_index = np.where( tsorted < 1.5)[0][-1]
             t0 = thtr.times[asort][0]
-            t1 = thtr.times[asort][test_index]
+            t1 = thtr.times[asort][-1]
             rho0 =1.1 #10 # np.mean(density[:,asort[0]])
-            rho1 = density[:,test_index].max() # np.mean(density[:,asort[-1]])
+            rho1 = density.max() # np.mean(density[:,asort[-1]])
             alpha = 1.8
             tc =t1*(1-(rho1/rho0)**(-1./alpha))**-0.5
             G=1 #np.pi*4#1620./(4*np.pi)
@@ -84,14 +74,12 @@ for nfile,fname in enumerate(file_list):
             #ax.text( tsorted[0], 0.5*rho1, 
             ax.legend(loc=0)
             axbonk(ax,xscale='linear',yscale='log',xlabel='t',ylabel=r'$\rho$')
-            name_base = "%s/rho_time/"%output_dir
-            oname = name_base + "/density_time_c%04d"%(core_id)
+            oname = "test2/%s_density_4_c%04d"%(out_prefix,core_id)
             fig.savefig(oname)
-            print('saved '+oname)
 #           for i,n in enumerate(asort):
 #               timeline=plt.plot( [tsorted[i]]*2,[1,1e8],c=[0.5]*3,linewidth=0.1)
 #               timetext=plt.text( tsorted[i], 1e8, 'n=%d'%thtr.frames[n])
-#               outname = name_base+'/rho_t_fit2_c%04d_n%04d.png'%(core_id,i)
+#               outname = 'image_tracks/rho_t_fit2_c%04d_s%04d.png'%(core_id,i)
 #               plt.yscale('log')
 #               plt.savefig(outname)
 #               timeline[0].remove()

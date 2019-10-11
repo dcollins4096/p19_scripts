@@ -1,5 +1,6 @@
 
 from starter1 import *
+import yt
 # for new ds.all_data() profile plot - 
 def rs(arr):
     return arr.reshape(arr.shape + (1,)) 
@@ -21,7 +22,7 @@ if 'track' not in dir():
     #track.read('tracks_first_last_all_nonzero.h5')
     track.read('tracks_frame012_all_nonzero.h5')
 all_cores = np.unique(track.core_ids)
-if 1:
+if 0:
     plt.clf()
     dmeans = np.zeros_like(all_cores,dtype='float')
     dstds = np.zeros_like(all_cores,dtype='float')

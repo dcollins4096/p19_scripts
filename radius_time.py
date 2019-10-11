@@ -5,25 +5,19 @@ import data_locations as dl
 reload(dl)
 
 #file_list=glob.glob('%s/track_indfix_sixteenframe_core_*.h5'%dl.snapshot_location)
-#file_list=glob.glob('/home/dcollins/scratch/Paper19/all_frames/track_all_frames_*.h5')
-gloob='/home/dcollins/scratch/Paper19/all_frames/track_all_frames_c0079.h5'
-gloob='/Volumes/deep7/RESEARCH2/Paper19_47_overlap/2019-07-24-sphere/*h5'
-
-file_list=glob.glob(gloob)
 file_list=glob.glob('/home/dcollins/scratch/Paper19/all_frames/track_all_frames_*.h5')
 file_list = ['./sphere2.h5']
 file_list = ['./u16_sphere2_t2.h5']
 out_prefix = 'u16_sphere2_t2'
+file_list = ['./u17_sphere_linear.h5']
 file_list = ['./u17_test.h5']
+#file_list = ['./u17_works.h5']
 out_prefix = 'u17_linear'
+field = 'radius'
 plt.close('all')
-output_dir='sphere'
 
 
-
-
-
-for nfile,fname in enumerate(file_list):
+for nfile,fname in enumerate(file_list) :#[:3])
 
     #this is crude
     #t1 = fname.split("/")[-1]
@@ -49,49 +43,63 @@ for nfile,fname in enumerate(file_list):
         for nc,core_id in enumerate(core_list):
             ms = trackage.mini_scrubber(thtr,core_id)
             density = thtr.c([core_id],'density')
+            if field in thtr.track_dict.keys():
+                the_field = thtr.c([core_id],field)
+            elif field == 'radius':
+                the_field = ms.r
             tmap=rainbow_map(ms.ntimes)
             norm = mpl.colors.Normalize()
             norm.autoscale( np.log10(density[:,n0]))
             cmap = mpl.cm.jet
             color_map = mpl.cm.ScalarMappable(norm=norm,cmap=cmap)
 
-            for npart in list(range(ms.nparticles))[::100]:
-                c = color_map.to_rgba(np.log10(density[npart,n0]))
+            for npart in list(range(ms.nparticles))[::10]:
+                #c = color_map.to_rgba(np.log10(density[npart,n0]))
+                c = color_map.to_rgba(density[npart,n0])
                 #ax.plot( tsorted, density[npart,asort],c='k',linestyle=':',marker='*')
-                ax.plot( tsorted, density[npart,asort],c=c,linewidth=.1)#linestyle=':')
+                ax.plot( tsorted, the_field[npart,asort],c=c,linewidth=.1)#linestyle=':')
+                theta = np.arange(0,2*np.pi,0.1)
+                G = 1
+                rho0=10
+                test_r = ms.r[:,n0][30]
+                M = 4./3*np.pi*rho0*test_r**2
+                Eabs= G*M/test_r
+                B=G*M/(2*Eabs)**1.5
+                t = 10*B*(theta-np.sin(theta))
+                r0 = test_r# ms.r[:,n0]
+                guess_r = r0*(1-np.sin(theta))
+                ax.plot(t,guess_r)
             #err= np.exp(np.log(density).std(axis=0)[asort])
-            ax.plot(tsorted, density.mean(axis=0)[asort],c='k')
+            #ax.plot(tsorted, density.mean(axis=0)[asort],c='k')
             #ax.errorbar(tsorted, density.mean(axis=0)[asort],c='k',yerr=err)
             #ax.plot(tsorted, density.mean(axis=0),c='k')
 
-            test_index = np.where( tsorted < 1.5)[0][-1]
-            t0 = thtr.times[asort][0]
-            t1 = thtr.times[asort][test_index]
-            rho0 =1.1 #10 # np.mean(density[:,asort[0]])
-            rho1 = density[:,test_index].max() # np.mean(density[:,asort[-1]])
-            alpha = 1.8
-            tc =t1*(1-(rho1/rho0)**(-1./alpha))**-0.5
-            G=1 #np.pi*4#1620./(4*np.pi)
-            tff_global = np.sqrt(3*np.pi/(32*G*1))
-            tff_local = np.sqrt(3*np.pi/(32*G*rho0))
-            #tc=tff_local #kludge
-            rhot = rho0*(1-(tsorted/tc)**2)**-alpha
-            rho_c = 3*np.pi/(32*G*tc**2)
+            #t0 = thtr.times[asort][0]
+            #t1 = thtr.times[asort][-1]
+            #rho0 =1.1 #10 # np.mean(density[:,asort[0]])
+            #rho1 = density.max() # np.mean(density[:,asort[-1]])
+            #alpha = 1.8
+            #tc =t1*(1-(rho1/rho0)**(-1./alpha))**-0.5
+            #G=1 #np.pi*4#1620./(4*np.pi)
+            #tff_global = np.sqrt(3*np.pi/(32*G*1))
+            #tff_local = np.sqrt(3*np.pi/(32*G*rho0))
+            ##tc=tff_local #kludge
+            #rhot = rho0*(1-(tsorted/tc)**2)**-alpha
+            #rho_c = 3*np.pi/(32*G*tc**2)
 
-            ok = np.isnan(rhot)==False
-            ax.plot( tsorted[ok], rhot[ok], c='r',label=r'$tc/tff = %0.2e$'%(tc/tff_local))
+            #ok = np.isnan(rhot)==False
+            #ax.plot( tsorted[ok], rhot[ok], c='r',label=r'$tc/tff = %0.2e$'%(tc/tff_local))
             #ax.text( tsorted[0], rho1, r'$tc = %0.2e \rho_c = %0.2e$'%(tc,rho_c))
             #ax.text( tsorted[0], 0.5*rho1, 
-            ax.legend(loc=0)
-            axbonk(ax,xscale='linear',yscale='log',xlabel='t',ylabel=r'$\rho$')
-            name_base = "%s/rho_time/"%output_dir
-            oname = name_base + "/density_time_c%04d"%(core_id)
+            #ax.legend(loc=0)
+            axbonk(ax,xscale='linear',yscale='linear',xlabel='t',ylabel=r'$r$')
+            oname = "test2/%s_%s_time_c%04d"%(out_prefix,field,core_id)
             fig.savefig(oname)
-            print('saved '+oname)
+            print(oname)
 #           for i,n in enumerate(asort):
 #               timeline=plt.plot( [tsorted[i]]*2,[1,1e8],c=[0.5]*3,linewidth=0.1)
 #               timetext=plt.text( tsorted[i], 1e8, 'n=%d'%thtr.frames[n])
-#               outname = name_base+'/rho_t_fit2_c%04d_n%04d.png'%(core_id,i)
+#               outname = 'image_tracks/rho_t_fit2_c%04d_s%04d.png'%(core_id,i)
 #               plt.yscale('log')
 #               plt.savefig(outname)
 #               timeline[0].remove()
