@@ -1,11 +1,21 @@
 from starter2 import *
+#import pdb
+
+import data_locations as dl
+reload(dl)
+
+file_list=glob.glob('%s/track_indfix_sixteenframe_core_*.h5'%dl.snapshot_location)
+
 plt.close('all')
-file_list=glob.glob('/home/dcollins/scratch/Paper19/particle_error/particle_error_test_c0031_threeframes.h5')
-file_list=glob.glob('/home/dcollins/scratch/Paper19/particle_error/track_indfix_sixteenframe_core_0031.h5')
-file_list=glob.glob('/home/dcollins/scratch/Paper19/particle_error/track_indfix_sixteenframe_core_0031.h5')
-file_list=glob.glob('/scratch1/dcollins/Paper19/track_index_fix/track_indfix_sixteenframe_core_*.h5')
-file_list=glob.glob('/home/dcollins/scratch/Paper19/track_index_fix/track_indfix_sixteenframe_core_*.h5')
-for nfile,fname in enumerate(file_list[:3]):
+#file_list=glob.glob('/home/dcollins/scratch/Paper19/particle_error/particle_error_test_c0031_threeframes.h5')
+#file_list=glob.glob('/home/dcollins/scratch/Paper19/particle_error/track_indfix_sixteenframe_core_0031.h5')
+#file_list=glob.glob('/home/dcollins/scratch/Paper19/particle_error/track_indfix_sixteenframe_core_0031.h5')
+#file_list=glob.glob('/scratch1/dcollins/Paper19/track_index_fix/track_indfix_sixteenframe_core_*.h5')
+#file_list=glob.glob('/home/dcollins/scratch/Paper19/track_index_fix/track_indfix_sixteenframe_core_*.h5')
+#print("my name is Dan")
+#print(file_list)
+#pdb.set_trace()
+for nfile,fname in enumerate(file_list):#[:3]):
     #0164.h5
     t1 = fname.split("/")[-1]
     #l = len("track_three_to_test_core_")
@@ -17,7 +27,8 @@ for nfile,fname in enumerate(file_list[:3]):
     #if this_cor not in  [12]:#, 31]:
     #    continue
     print(this_cor)
-    this_looper=looper.core_looper(directory=directory)
+    this_looper=looper.core_looper(directory=dl.enzo_directory)
+#directory)
     trw.load_loop(this_looper,fname)
     thtr = this_looper.tr
     all_cores = np.unique(thtr.core_ids)
@@ -29,6 +40,7 @@ for nfile,fname in enumerate(file_list[:3]):
         asort =  np.argsort(thtr.times)
         n0=asort[0]
         tsorted = thtr.times[asort]
+        print("my name is dan")
         for nc,core_id in enumerate(core_list):
             ms = trackage.mini_scrubber(thtr,core_id)
             density = thtr.c([core_id],'density')
@@ -38,6 +50,7 @@ for nfile,fname in enumerate(file_list[:3]):
             #ln rho = x ln b
             #ln rho/ln b = x
             field = np.zeros_like(density)
+            print(np.shape(field))
             ok = mag != 0
             field[ok] = np.log(density[ok])/np.log(mag[ok])
             field_name = 'dbx'
@@ -59,7 +72,7 @@ for nfile,fname in enumerate(file_list[:3]):
                 if 1:
                     c = color_map.to_rgba(field[npart,n0])
                 #plt.plot( tsorted, field[npart,asort],c='k',linestyle=':',marker='*')
-                axlines.plot( tsorted, field[npart,asort],c=c,linewidth=.1)#linestyle=':')
+                axlines.plot( tsorted, field[npart,asort],c=c,linewidth=.1)#linestyle=':') #put back
             #err= np.exp(np.log(field).std(axis=0)[asort])
             #err= np.exp(np.log(field).std(axis=0)[asort])
             #plt.plot(tsorted, field.mean(axis=0)[asort],c='k')
@@ -76,10 +89,12 @@ for nfile,fname in enumerate(file_list[:3]):
             tm = rainbow_map(len(asort))
             field_mean=np.zeros(asort.size)
             for i,n in enumerate(asort):
-                hist = np.histogram(field[:,n],bins=bins)
-                wire[:,i]=hist[0]
-                field_mean[i] = (wire[:,i]*binc).sum()/wire[:,i].sum()
-                axhist.plot(binc, wire[:,i],c=tm(i))
+                print(n)
+                hist ,bin_edge = np.histogram(field[:,n],bins=bins)
+                binc_2 = 0.5*(bin_edge[:-1]+bin_edge[1:])
+                wire[:,i]=hist
+                field_mean[i] = (wire[:,i]*binc_2).sum()/wire[:,i].sum()
+                axhist.plot(binc_2, wire[:,i],c=tm(i))
                 axhist.plot([field_mean[i]]*2,[1,100],c=tm(i))
             thex = np.tile(tsorted,(nbins,1))
             they = np.tile(binc,(len(tsorted),1)).transpose()

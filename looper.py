@@ -70,8 +70,7 @@ class core_looper():
                  out_prefix="",
                  frame_list=[], core_list=None, target_frame=0,
                  fields_from_grid = [], 
-                 individual_particle_tracks=False,
-                 derived=[]):
+                 individual_particle_tracks=False):
         #set defaults and/or arguments.
         self.current_frame = None
         self.data_template = data_template
@@ -96,8 +95,6 @@ class core_looper():
         self.snaps = defaultdict(dict) 
         #    defaultdict(whatev) is a dict, but makes a new (whatev) by default
         self.ds_list={}
-        self.all_data={}
-        self.derived=derived
 
         self.shift = True
 
@@ -141,10 +138,6 @@ class core_looper():
                 new_ds = False
         if new_ds:
             self.ds = yt.load(self.filename)
-            if derived is None:
-                derived = self.derived
-            for add_derived_field in derived:
-                add_derived_field(self.ds)
             self.ds_list[frame] = self.ds
         if True:
             self.ds.periodicity = (True,True,True)
@@ -356,6 +349,9 @@ class snapshot():
             self.N_vec[:,dim] = self.R_vec[:,dim]/self.R_mag
         self.V_relative = self.vel - self.V_bulk
         self.V_radial = (self.V_relative * self.N_vec).sum(axis=1)
+        self.field_values['V_radial']=self.V_radial
+        #self.field_values['V_mag']=((self.V_relative*self.V_relative).sum())**0.5
+        self.field_values['R_mag']=self.R_mag
         #self.field_values['V_radial']=self.V_radial
         #self.field_values['V_relative']=self.V_relative
 
