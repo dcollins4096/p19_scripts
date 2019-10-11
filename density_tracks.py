@@ -5,8 +5,13 @@ import data_locations as dl
 reload(dl)
 
 #file_list=glob.glob('%s/track_indfix_sixteenframe_core_*.h5'%dl.snapshot_location)
-file_list=glob.glob('/home/dcollins/scratch/Paper19/all_frames/track_all_frames_*.h5')
+#file_list=glob.glob('/home/dcollins/scratch/Paper19/all_frames/track_all_frames_*.h5')
+gloob='/home/dcollins/scratch/Paper19/all_frames/track_all_frames_c0079.h5'
+gloob='/Volumes/deep7/RESEARCH2/Paper19_47_overlap/2019-07-24-sphere/*h5'
+
+file_list=glob.glob(gloob)
 plt.close('all')
+output_dir='sphere'
 
 
 for nfile,fname in enumerate(file_list) :#[:3])
@@ -41,11 +46,11 @@ for nfile,fname in enumerate(file_list) :#[:3])
             cmap = mpl.cm.jet
             color_map = mpl.cm.ScalarMappable(norm=norm,cmap=cmap)
 
-            for npart in range(ms.nparticles)[::100]:
+            for npart in range(ms.nparticles):# [::100]:
                 c = color_map.to_rgba(np.log10(density[npart,n0]))
                 #ax.plot( tsorted, density[npart,asort],c='k',linestyle=':',marker='*')
                 ax.plot( tsorted, density[npart,asort],c=c,linewidth=.1)#linestyle=':')
-            err= np.exp(np.log(density).std(axis=0)[asort])
+            #err= np.exp(np.log(density).std(axis=0)[asort])
             ax.plot(tsorted, density.mean(axis=0)[asort],c='k')
             #ax.errorbar(tsorted, density.mean(axis=0)[asort],c='k',yerr=err)
             #ax.plot(tsorted, density.mean(axis=0),c='k')
@@ -68,12 +73,14 @@ for nfile,fname in enumerate(file_list) :#[:3])
             #ax.text( tsorted[0], 0.5*rho1, 
             ax.legend(loc=0)
             axbonk(ax,xscale='linear',yscale='log',xlabel='t',ylabel=r'$\rho$')
-            oname = "image_tracks/density_4_c%04d_n%04d"%(core_id,frame)
+            name_base = "%s/rho_time/"%output_dir
+            oname = name_base + "/density_time_c%04d"%(core_id)
             fig.savefig(oname)
+            print('saved '+oname)
 #           for i,n in enumerate(asort):
 #               timeline=plt.plot( [tsorted[i]]*2,[1,1e8],c=[0.5]*3,linewidth=0.1)
 #               timetext=plt.text( tsorted[i], 1e8, 'n=%d'%thtr.frames[n])
-#               outname = 'image_tracks/rho_t_fit2_c%04d_s%04d.png'%(core_id,i)
+#               outname = name_base+'/rho_t_fit2_c%04d_n%04d.png'%(core_id,i)
 #               plt.yscale('log')
 #               plt.savefig(outname)
 #               timeline[0].remove()
