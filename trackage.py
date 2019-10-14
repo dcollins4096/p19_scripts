@@ -202,7 +202,7 @@ def shift_down(pos):
 
     #distance_from_final = np.abs(out- np.tile(out[:,-1], (out.shape[1],1)).transpose())
     mean_pos = np.median(out[:,-1])
-    print("mean_pos",mean_pos)
+    #print("mean_pos",mean_pos)
     distance_from_final =        out- mean_pos
     #ft = np.abs(distance_from_final[:,:-1]) > 0.5
     ft = np.abs(distance_from_final) > 0.5
@@ -215,15 +215,20 @@ def shift_down(pos):
     return out#,delta
         
 class mini_scrubber():
-    def __init__(self,trk,core_id):
+    def __init__(self,trk,core_id,do_velocity=False):
         self.trk=trk
-        self.scrub(core_id)
+        self.scrub(core_id,do_velocity=do_velocity)
         self.axis=0
                 
-    def scrub(self,core_id, axis=0):
+    def scrub(self,core_id, axis=0, do_velocity=False):
         self.raw_x = self.trk.c([core_id],'x')
         self.raw_y = self.trk.c([core_id],'y')
         self.raw_z = self.trk.c([core_id],'z')
+
+        self.density = self.trk.c([core_id],'density')
+        self.cell_volume = self.trk.c([core_id],'cell_volume')
+        self.mass = self.density*self.cell_volume
+        self.mass_total=self.mass.sum(axis=0)
         #this_x=raw_x
         #this_y=raw_y
         if 1:
@@ -236,21 +241,57 @@ class mini_scrubber():
             self.this_x = self.raw_x+0
             self.this_y = self.raw_y+0
             self.this_z = self.raw_z+0
-        self.mean_x = np.mean(self.this_x,axis=0)
-        self.mean_y = np.mean(self.this_y,axis=0)
-        self.mean_z = np.mean(self.this_z,axis=0)
+        self.mean_x = np.sum(self.this_x*self.mass,axis=0)/self.mass_total
+        self.mean_y = np.sum(self.this_y*self.mass,axis=0)/self.mass_total
+        self.mean_z = np.sum(self.this_z*self.mass,axis=0)/self.mass_total
         self.nparticles,self.ntimes=self.this_x.shape
         self.meanx2 = np.tile(self.mean_x,(self.raw_x.shape[0],1))
         self.meany2 = np.tile(self.mean_y,(self.raw_x.shape[0],1))
         self.meanz2 = np.tile(self.mean_z,(self.raw_z.shape[0],1))
-        self.r2 = (self.this_x-self.meanx2)**2+\
-                  (self.this_y-self.meany2)**2+\
-                  (self.this_z-self.meanz2)**2
+        self.rx_rel=self.this_x-self.meanx2
+        self.ry_rel=self.this_y-self.meany2
+        self.rz_rel=self.this_z-self.meanz2
+        self.r2 = self.rx_rel**2+self.ry_rel**2+self.rz_rel**2
         self.r=np.sqrt(self.r2)
         self.rmax = np.max(self.r,axis=0)
         self.max_track = np.where( self.r[:,0] == self.rmax[0])
         self.rmax_fat=np.tile(self.rmax,(self.raw_x.shape[0],1))
         self.rms = np.sqrt( np.mean(self.r2,axis=0))
+
+        if do_velocity:
+            self.raw_vx = self.trk.c([core_id],'velocity_x')
+            self.raw_vy = self.trk.c([core_id],'velocity_y')
+            self.raw_vz = self.trk.c([core_id],'velocity_z')
+            self.mean_vx = np.sum(self.raw_vx*self.mass,axis=0)/self.mass_total
+            self.mean_vy = np.sum(self.raw_vy*self.mass,axis=0)/self.mass_total
+            self.mean_vz = np.sum(self.raw_vz*self.mass,axis=0)/self.mass_total
+            self.sqr_vx = np.sum(self.raw_vx**2,axis=0)
+            self.sqr_vy = np.sum(self.raw_vy**2,axis=0)
+            self.sqr_vz = np.sum(self.raw_vz**2,axis=0)
+            self.raw_v2 = self.raw_vx**2+self.raw_vy**2+self.raw_vx**2
+            self.rel_vx = self.raw_vx-self.mean_vx
+            self.rel_vy = self.raw_vy-self.mean_vy
+            self.rel_vz = self.raw_vx-self.mean_vz
+            self.cov_v2 = (self.raw_vx-self.mean_vx)**2+\
+                          (self.raw_vy-self.mean_vy)**2+\
+                          (self.raw_vx-self.mean_vz)**2
+            self.rx_hat = self.rx_rel/self.r
+            self.ry_hat = self.ry_rel/self.r
+            self.rz_hat = self.rz_rel/self.r
+            self.vr_raw = self.rx_hat*self.raw_vx+\
+                      self.ry_hat*self.raw_vy+\
+                      self.rz_hat*self.raw_vz
+            self.vr_rel = self.rx_hat*self.rel_vx+\
+                      self.ry_hat*self.rel_vy+\
+                      self.rz_hat*self.rel_vz
+            self.vt2_raw = (self.raw_vx-self.vr_raw*self.rx_hat)**2+\
+                       (self.raw_vy-self.vr_raw*self.ry_hat)**2+\
+                       (self.raw_vz-self.vr_raw*self.rz_hat)**2
+            self.vt2_rel = (self.rel_vx-self.vr_rel*self.rx_hat)**2+\
+                       (self.rel_vy-self.vr_rel*self.ry_hat)**2+\
+                       (self.rel_vz-self.vr_rel*self.rz_hat)**2
+
+
         self.axis = axis
         if self.axis == 0:
             self.this_h = self.this_y
