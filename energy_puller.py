@@ -25,9 +25,12 @@ ds = yt.load(dl.enzo_directory+"/GravPotential/DD0125/data0125")
 xtra_energy.add_force_terms(ds)
 radius=0.1
 sphere=ds.sphere(cen,radius)
-for field in ['mag_work']:
+for field in ['density']: #,'pressure_accel_mag']:
     proj = ds.proj(field,0,center=cen,data_source=sphere)
     pw = proj.to_pw(center=cen,width=2.*radius)
+    pw.set_cmap(field,'jet')
+    pw.annotate_magnetic_field()
+
     #pw.set_zlim('pressure_work',-1e6,1e6)
     pw.set_log(field,True,linthresh=0.1)
     pw.save('/home/dcollins4096/PigPen/test_c0079')
