@@ -37,7 +37,7 @@ def add_energies(obj):
             alpha = data.ds.quan(alpha, '1/(code_length**3/code_time**2/code_mass)')
             return ( (gx**2+gy**2+gz**2)*alpha )
         obj.add_field('grav_energy',grav_energy,validators=[yt.ValidateGridType()],
-                 units='code_mass*code_length**2/(code_time**2*code_length**3)')
+                 units='code_mass*code_length**2/(code_time**2*code_length**3)', sampling_type='cell')
     def therm_energy(field,data):
         sound_speed = data.ds.quan(1.,'code_velocity')
         rho_0 = data.ds.quan(1.,'code_mass/code_length**2')
@@ -45,13 +45,13 @@ def add_energies(obj):
         therme = data['density']*e
         return therme
     obj.add_field('therm_energy',therm_energy,
-                 units='code_mass*code_length**2/(code_time**2*code_length**3)')
+                 units='code_mass*code_length**2/(code_time**2*code_length**3)', sampling_type='cell')
 def add_test_energies(obj):
     def gx(field,data):
         gx =data.ds.arr(grad(data,'PotentialField',0),'code_length/code_time**2')
         return gx
     obj.add_field('gx',gx,validators=[yt.ValidateGridType()],
-                 units='code_length/code_time**2')
+                 units='code_length/code_time**2', sampling_type='cell')
 
 def add_force_terms(obj):
     def momentum_flux(field,data):
@@ -64,7 +64,7 @@ def add_force_terms(obj):
     work_units='erg/(cm**3*s)'
     def gas_pressure(field,data):
         return data['density']*data.ds.quan(1,'code_velocity')**2
-    obj.add_field('gas_pressure',gas_pressure,units='dyne/cm**2')
+    obj.add_field('gas_pressure',gas_pressure,units='dyne/cm**2', sampling_type='cell')
     def pressure_work(field,data):
         try:
             gi =-1*xo.AdotDel(data, ['velocity_x','velocity_y','velocity_z'], 'gas_pressure') #-data.ds.arr(grad(data,'PotentialField',2),'code_length/code_time**2')
@@ -74,6 +74,21 @@ def add_force_terms(obj):
         return gi
     obj.add_field('pressure_work',pressure_work,validators=pressure_validators,
                  units=work_units,sampling_type='cell', take_log=True)
+    def dpdx(field,data):
+        output = xo.grad(data,'gas_pressure',0)
+        return output
+    obj.add_field('dpdx',dpdx,units='dyne/cm**3', validators=[yt.ValidateSpatial(1,['pressure'])], sampling_type='cell')
+    def dpdy(field,data):
+        output = xo.grad(data,'gas_pressure',1)
+        return output
+    obj.add_field('dpdy',dpdy,units='dyne/cm**3', validators=[yt.ValidateSpatial(1,['pressure'])], sampling_type='cell')
+    def dpdz(field,data):
+        output = xo.grad(data,'gas_pressure',2)
+        return output
+    obj.add_field('dpdz',dpdz,units='dyne/cm**3', validators=[yt.ValidateSpatial(1,['pressure'])], sampling_type='cell')
+    def pressure_accel_mag(field,data):
+        return np.sqrt( data['dpdx']**2+data['dpdy']**2+data['dpdz']**2)/data['density']
+    obj.add_field('pressure_accel_mag',pressure_accel_mag,units='code_length/code_time**2', validators=[yt.ValidateSpatial(1,['pressure'])], sampling_type='cell')
     if obj.parameters['SelfGravity']:
         def grav_x(field,data):
             gi =-data.ds.arr(grad(data,'PotentialField',0),'code_length/code_time**2')
@@ -102,6 +117,10 @@ def add_force_terms(obj):
             return gi
         obj.add_field('gravity_work',gravity_work,validators=pressure_validators,
                      units=work_units,sampling_type='cell', take_log=True)
+        def grav_norm(field,data):
+            return np.sqrt( data['grav_x']**2 + data['grav_y']**2 + data['grav_z']**2)
+        obj.add_field('grav_norm',grav_norm, validators=pressure_validators,
+                      units='code_length/code_time**2', sampling_type='cell')
     def momentum_flux(field,data):
         f1 = xo.gradf(0.5*data['x-velocity']*data['kinetic_energy'],0,data.dds)
         f2 = xo.gradf(0.5*data['y-velocity']*data['kinetic_energy'],1,data.dds)
@@ -131,7 +150,7 @@ def add_force_terms(obj):
         output += data['velocity_z']*(current[0]*Bvector[1]-current[1]*Bvector[2])
         output *= 1./(np.pi*4)
         return output
-    obj.add_field('mag_work',mag_work, validators=std_validators_2, units=work_units)
+    obj.add_field('mag_work',mag_work, validators=std_validators_2, units=work_units, sampling_type='cell')
 
 
     #def pressure_force(field,data):
