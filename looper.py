@@ -441,9 +441,7 @@ def frame_loop(function):
 def particle_loop(function):
     def wrapper(looper,*args,**kwargs):
         for frame in looper.frame_list:
-            self.ds = looper.load(frame=frame)
-            #usually returns 'all_data'
-            region = looper.get_region()
+            snapshot.ds = weakref.proxy(looper.load(frame=frame))
             for core_id in looper.core_list:
                 this_snapshot = looper.make_snapshot(frame,core_id)
                 if this_snapshot.R_centroid is None:
