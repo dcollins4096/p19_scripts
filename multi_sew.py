@@ -6,7 +6,9 @@ import davetools as DT
 import data_locations as dl
 reload(dl)
 
-file_list=glob.glob('%s/track_indfix_sixteenframe_core_*.h5'%dl.snapshot_location)
+#file_list=glob.glob('%s/track_indfix_sixteenframe_core_*.h5'%dl.snapshot_location)
+gloob='/home/dcollins/scratch/Paper19/all_frames/track_all_frames_c0079.h5'
+file_list=glob.glob(gloob)
 plt.close('all')
 
 #This keeps track of the min and max velocity.
@@ -38,9 +40,9 @@ if 'ext_v' not in dir():
 for nfile,fname in enumerate(file_list):
 
     #this is crude
-    t1 = fname.split("/")[-1]
-    l = len("track_indfix_sixteenframe_core_")
-    this_cor = int(t1[l:l+4]) #[fname.index('_'):]
+    #t1 = fname.split("/")[-1]
+    #l = len("track_indfix_sixteenframe_core_")
+    #this_cor = int(t1[l:l+4]) #[fname.index('_'):]
     #if this_cor not in  [12]:#, 31]:
     #    continue
     #print(this_cor)
@@ -66,11 +68,18 @@ for nfile,fname in enumerate(file_list):
             for it,nt in enumerate(asort):
                 frame = thtr.frames[nt]
                 basedir = "/home/dcollins/RESEARCH2/Paper19_47_overlap/0000_density_tracks/x/ALL"
+                basedir = "/home/dcollins/RESEARCH2/Paper19_47_overlap/0000_density_tracks/AllFrames/"
                 core_dir = "%s/c%04d"%(basedir,core_id)
-                image = "%s/test_full_particles_c%04d_n%04d_Projection_x_density.png"%(core_dir,core_id,frame)
-                rhoname = 'image_tracks/rho_r_step_c%04d_n%04d.png'%(core_id,frame)
-                outname = 'image_tracks/rho_t_fit2_c%04d_s%04d.png'%(core_id,it)#frame)
+                #image = "%s/test_full_particles_c%04d_n%04d_Projection_x_density.png"%(core_dir,core_id,frame)
+                image = "%s/test_c%04d_n%04d_Projection_x_density.png"%(core_dir,core_id,frame)
+                
+                image = "%s/test_c%04d_n%04d_centered_Projection_x_density.png"%(core_dir,core_id,frame)
+                name_base = "image_tracks/rho_r/"
+                rhoname = name_base+'/rho_r_step_c%04d_n%04d.png'%(core_id,frame)
+                name_base = "image_tracks/rho_time/"
+                outname = name_base+'/rho_t_fit2_c%04d_n%04d.png'%(core_id,it)#frame)
                 skip = False
+
                 for fff in [image, rhoname, outname]:
                     if not os.path.exists(fff):
                         skip=True
@@ -78,6 +87,7 @@ for nfile,fname in enumerate(file_list):
                 if skip:
                     #print("MISSING")
                     continue
+                print("to read %s"%image)
 
                 img1 = mpimg.imread(image) 
                 img2 = mpimg.imread(outname) 

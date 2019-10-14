@@ -7,3 +7,7 @@ if 'machine' in os.environ:
     if os.environ['machine'] in ['shipsterns']:
         enzo_directory = '/home/dcollins/scratch/u05-r4-l4-128'
         snapshot_location = '/home/dcollins/scratch/Paper19/track_index_fix'
+    if os.environ['machine'] in ['mullaghmore']:
+        enzo_directory = '/Users/dcollins/scratch/P19/u05-r4-l4-128'
+        snapshot_location = '/home/dcollins/scratch/Paper19/track_index_fix'
+

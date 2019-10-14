@@ -44,6 +44,8 @@ class track_manager():
         self.core_ids = nar([],dtype='int64')
         self.frames = nar([],dtype='int64')
         self.times = nar([],dtype='float64')
+        self.V_rad = nar([],dtype='float64')
+        self.V_rel = nar([],dtype='float64')
         self.track_dict={}
         self.shape=(0,0) #particles, frames
     def write(self,fname):
@@ -53,6 +55,8 @@ class track_manager():
             fptr['core_ids'] = self.core_ids
             fptr['frames'] = self.frames
             fptr['times'] = self.times
+            fptr['r_velocity'] = self.V_rad
+            fptr['full_velocity']=self.V_rel
             for k in self.track_dict:
                 fptr[k] = self.track_dict[k]
         except:
@@ -63,7 +67,7 @@ class track_manager():
         fptr = h5py.File(fname,'r')
         try:
             for key in fptr:
-                if str(key) in ['particle_ids', 'core_ids', 'frames', 'times']:
+                if str(key) in ['particle_ids', 'core_ids', 'frames', 'times','r_velocity','full_velocity']:
                     self.__dict__[key]=fptr[key][:]
                 else:
                     self.track_dict[key] = fptr[key][:] 
@@ -116,6 +120,7 @@ class track_manager():
         if snapshot.frame not in self.frames:
             self.frames=np.append(self.frames,snapshot.frame)
             self.times=np.append(self.times,snapshot.time) #ds['InitialTime'])
+            self.V_rad = np.append(self.V_rad,snapshot.V_radial)
 
         frame_id = np.where(self.frames == snapshot.frame)[0][0]
 
